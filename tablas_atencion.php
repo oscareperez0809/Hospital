@@ -5,6 +5,7 @@ $tituloHeader = 'Control de Atención Médica';
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,61 +25,48 @@ $tituloHeader = 'Control de Atención Médica';
         })();
     </script>
 </head>
+
 <body>
 
     <div class="dashboard-container">
-        
+
         <!-- Barra Lateral con ATENCIÓN activo -->
         <?php include 'sidebar.php'; ?>
 
         <!-- Área Principal -->
         <main class="main-wrapper">
-            
+
             <!-- Cabecera Superior -->
             <?php include 'header.php'; ?>
 
             <!-- Contenido de Tabla de Atención (Fiel a la imagen) -->
             <section class="content-body">
-                
+
                 <!-- Barra superior con REGISTRAR, filtros y BUSCAR -->
-                <div class="filter-chips-wrapper">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
-                        
-                        <!-- Botones superiores: REGISTRAR y filtros principales -->
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <div class="filter-chips-row">
-                                <a href="formulario_atencion.php" class="btn-chip" style="font-weight: 700;">
-                                    REGISTRAR
-                                </a>
-                                <button type="button" class="btn-chip">Departamento</button>
-                                <button type="button" class="btn-chip">Especialidad</button>
-                                <button type="button" class="btn-chip">Medico Tratante</button>
-                                <button type="button" class="btn-chip">Etiologia</button>
-                            </div>
-                            
-                            <!-- Segunda fila de filtros: Cama -->
-                            <div class="filter-chips-row">
-                                <button type="button" class="btn-chip">Cama</button>
-                            </div>
-                        </div>
+                <div class="table-toolbar-container">
+                    <div class="table-toolbar-left">
+                        <a href="formulario_atencion.php" class="btn-chip" style="font-weight: 700;">
+                            REGISTRAR
+                        </a>
+                        <button type="button" class="btn-chip">Departamento</button>
+                        <button type="button" class="btn-chip">Especialidad</button>
+                        <button type="button" class="btn-chip">Etiologia</button>
+                    </div>
 
-                        <!-- Cápsula BUSCAR a la derecha -->
-                        <div class="search-pill-container">
-                            <input 
-                                type="text" 
-                                id="searchPatients" 
-                                class="search-pill-input" 
-                                placeholder="BUSCAR"
-                                autocomplete="off"
-                            >
-                            <span class="search-pill-icon" title="Buscar">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                </svg>
-                            </span>
-                        </div>
-
+                    <!-- Cápsula BUSCAR a la derecha -->
+                    <div class="search-pill-container">
+                        <input
+                            type="text"
+                            id="searchPatients"
+                            class="search-pill-input"
+                            placeholder="BUSCAR"
+                            autocomplete="off">
+                        <span class="search-pill-icon" title="Buscar">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </span>
                     </div>
                 </div>
 
@@ -107,8 +95,8 @@ $tituloHeader = 'Control de Atención Médica';
                                 <td>201</td>
                                 <td>2</td>
                                 <td class="cell-actions">
-                                    <a href="formulario_atencion.php?cedula=12-4567-8910&depto=Cirugía General&especialidad=Traumatología&medico=Dr. García López&cama=201" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
+                                    <a href="formulario_atencion.php?cedula=12-4567-8910&depto=Cirugía General&especialidad=Traumatología&medico=Dr. García López&cama=201" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
                                 </td>
                             </tr>
@@ -121,8 +109,8 @@ $tituloHeader = 'Control de Atención Médica';
                                 <td>305</td>
                                 <td>3</td>
                                 <td class="cell-actions">
-                                    <a href="formulario_atencion.php?cedula=14-2034-5567&depto=Medicina Interna&especialidad=Cardiología&medico=Dra. Martínez Ruiz&cama=305" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
+                                    <a href="formulario_atencion.php?cedula=14-2034-5567&depto=Medicina Interna&especialidad=Cardiología&medico=Dra. Martínez Ruiz&cama=305" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
                                 </td>
                             </tr>
@@ -135,8 +123,8 @@ $tituloHeader = 'Control de Atención Médica';
                                 <td>102</td>
                                 <td>1</td>
                                 <td class="cell-actions">
-                                    <a href="formulario_atencion.php?cedula=11-9876-5432&depto=Urgencias&especialidad=Pediatría&medico=Dr. Hernández Díaz&cama=102" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
+                                    <a href="formulario_atencion.php?cedula=11-9876-5432&depto=Urgencias&especialidad=Pediatría&medico=Dr. Hernández Díaz&cama=102" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
                                 </td>
                             </tr>
@@ -149,8 +137,8 @@ $tituloHeader = 'Control de Atención Médica';
                                 <td>410</td>
                                 <td>4</td>
                                 <td class="cell-actions">
-                                    <a href="formulario_atencion.php?cedula=13-7789-1122&depto=Ginecología&especialidad=Obstetricia&medico=Dra. Torres Vega&cama=410" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
+                                    <a href="formulario_atencion.php?cedula=13-7789-1122&depto=Ginecología&especialidad=Obstetricia&medico=Dra. Torres Vega&cama=410" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
                                 </td>
                             </tr>
@@ -163,8 +151,8 @@ $tituloHeader = 'Control de Atención Médica';
                                 <td>508</td>
                                 <td>5</td>
                                 <td class="cell-actions">
-                                    <a href="formulario_atencion.php?cedula=15-3321-9988&depto=Oncología&especialidad=Oncología Médica&medico=Dr. Sánchez Mora&cama=508" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
+                                    <a href="formulario_atencion.php?cedula=15-3321-9988&depto=Oncología&especialidad=Oncología Médica&medico=Dr. Sánchez Mora&cama=508" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
                                 </td>
                             </tr>
@@ -180,4 +168,5 @@ $tituloHeader = 'Control de Atención Médica';
     <!-- Scripts -->
     <script src="dashboard.js"></script>
 </body>
+
 </html>

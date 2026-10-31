@@ -5,6 +5,7 @@ $tituloHeader = 'Control y Registro de Pacientes';
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,22 +25,23 @@ $tituloHeader = 'Control y Registro de Pacientes';
         })();
     </script>
 </head>
+
 <body>
 
     <div class="dashboard-container">
-        
+
         <!-- Barra Lateral con PACIENTE activo -->
         <?php include 'sidebar.php'; ?>
 
         <!-- Área Principal -->
         <main class="main-wrapper">
-            
+
             <!-- Cabecera Superior -->
             <?php include 'header.php'; ?>
 
             <!-- Contenido de Tabla de Pacientes -->
             <section class="content-body">
-                
+
                 <!-- Barra de herramientas: REGISTRAR y BUSCAR -->
                 <div class="patients-toolbar">
                     <a href="formulario_paciente.php" class="btn-registrar" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
@@ -47,13 +49,12 @@ $tituloHeader = 'Control y Registro de Pacientes';
                     </a>
 
                     <div class="search-pill-container">
-                        <input 
-                            type="text" 
-                            id="searchPatients" 
-                            class="search-pill-input" 
+                        <input
+                            type="text"
+                            id="searchPatients"
+                            class="search-pill-input"
                             placeholder="BUSCAR"
-                            autocomplete="off"
-                        >
+                            autocomplete="off">
                         <span class="search-pill-icon" title="Buscar">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -84,8 +85,8 @@ $tituloHeader = 'Control y Registro de Pacientes';
                                 <td>López</td>
                                 <td>Femenino</td>
                                 <td class="cell-actions">
-                                    <a href="formulario_paciente.php?cedula=12-4567-8910&nombre=María&paterno=Hernández&materno=López&genero=Femenino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
+                                    <a href="formulario_paciente.php?cedula=12-4567-8910&nombre=María&paterno=Hernández&materno=López&genero=Femenino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
                                 </td>
                             </tr>
@@ -96,8 +97,8 @@ $tituloHeader = 'Control y Registro de Pacientes';
                                 <td>García</td>
                                 <td>Masculino</td>
                                 <td class="cell-actions">
-                                    <a href="formulario_paciente.php?cedula=14-2034-5567&nombre=Carlos&paterno=Ramírez&materno=García&genero=Masculino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
+                                    <a href="formulario_paciente.php?cedula=14-2034-5567&nombre=Carlos&paterno=Ramírez&materno=García&genero=Masculino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
                                 </td>
                             </tr>
@@ -108,8 +109,8 @@ $tituloHeader = 'Control y Registro de Pacientes';
                                 <td>Martínez</td>
                                 <td>Femenino</td>
                                 <td class="cell-actions">
-                                    <a href="formulario_paciente.php?cedula=11-9876-5432&nombre=Lucía&paterno=Torres&materno=Martínez&genero=Femenino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
+                                    <a href="formulario_paciente.php?cedula=11-9876-5432&nombre=Lucía&paterno=Torres&materno=Martínez&genero=Femenino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
                                 </td>
                             </tr>
@@ -120,8 +121,8 @@ $tituloHeader = 'Control y Registro de Pacientes';
                                 <td>Díaz</td>
                                 <td>Masculino</td>
                                 <td class="cell-actions">
-                                    <a href="formulario_paciente.php?cedula=13-7789-1122&nombre=Juan&paterno=Sánchez&materno=Díaz&genero=Masculino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
+                                    <a href="formulario_paciente.php?cedula=13-7789-1122&nombre=Juan&paterno=Sánchez&materno=Díaz&genero=Masculino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
                                 </td>
                             </tr>
@@ -132,8 +133,8 @@ $tituloHeader = 'Control y Registro de Pacientes';
                                 <td>Ruiz</td>
                                 <td>Femenino</td>
                                 <td class="cell-actions">
-                                    <a href="formulario_paciente.php?cedula=15-3321-9988&nombre=Sofía&paterno=Gómez&materno=Ruiz&genero=Femenino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
+                                    <a href="formulario_paciente.php?cedula=15-3321-9988&nombre=Sofía&paterno=Gómez&materno=Ruiz&genero=Femenino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                     <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
                                 </td>
                             </tr>
@@ -149,4 +150,5 @@ $tituloHeader = 'Control y Registro de Pacientes';
     <!-- Scripts -->
     <script src="dashboard.js"></script>
 </body>
+
 </html>

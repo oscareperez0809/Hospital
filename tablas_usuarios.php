@@ -41,11 +41,8 @@ $tituloHeader = 'Gestión y Control de Usuarios';
             <section class="content-body">
                 
                 <!-- Barra de herramientas: REGISTRAR, filtros y BUSCAR -->
-                <div class="filter-chips-wrapper">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
-                        
-                        <!-- Botones superiores: REGISTRAR y filtros por Rol / Estado -->
-                        <div class="filter-chips-row">
+                <div class="table-toolbar-container">
+                        <div class="table-toolbar-left">
                             <a href="formulario_usuario.php" class="btn-chip" style="font-weight: 700;">
                                 REGISTRAR
                             </a>
@@ -73,7 +70,6 @@ $tituloHeader = 'Gestión y Control de Usuarios';
                             </span>
                         </div>
 
-                    </div>
                 </div>
 
                 <!-- Tabla Visual de Usuarios (Datos Rápidos) -->

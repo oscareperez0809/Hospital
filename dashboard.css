@@ -362,16 +362,24 @@ body {
 /* ========================================================
    SECCIÓN PACIENTES: TABLA Y BUSCADOR
    ======================================================== */
-/* ========================================================
-   SECCIÓN PACIENTES: BARRA SUPERIOR (REGISTRAR & BUSCAR)
-   ======================================================== */
+/* Barra de herramientas superior unificada para todas las tablas */
+.table-toolbar-container,
 .patients-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
     gap: 16px;
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+.table-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
 }
 
 /* Botón REGISTRAR rectangular gris claro como en la imagen */
@@ -409,8 +417,9 @@ body {
     align-items: center;
     background-color: #7d7575;
     border-radius: 9999px;
-    padding: 8px 20px;
-    width: 280px;
+    padding: 8px 18px;
+    width: 240px;
+    flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: background-color 0.2s ease;
 }
@@ -1050,6 +1059,117 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     }
 }
 
+/* ========================================================
+   ESTILOS PARA VENTANA MODAL FLOTANTE (EXPEDIENTE/DETALLE)
+   ======================================================== */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    padding: 20px;
+}
+
+.modal-backdrop.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.modal-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    width: 100%;
+    max-width: 580px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    transform: scale(0.95) translateY(12px);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-backdrop.open .modal-card {
+    transform: scale(1) translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    font-size: 26px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+    transform: scale(1.15);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--card-border);
+}
+
+.btn-cancel {
+    background-color: #d6d9de;
+    color: #111827;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background-color: #c4c8d0;
+}
+
+[data-theme="dark"] .btn-cancel {
+    background-color: #30363d;
+    color: #f0f6fc;
+}
+
+[data-theme="dark"] .btn-cancel:hover {
+    background-color: #3f4752;
+}
+
 /* Modal Detalle de Usuario */
 .user-detail-header-card {
     display: flex;
@@ -1132,7 +1252,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .filter-chips-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
@@ -1141,8 +1261,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     color: #111827;
     border: none;
     border-radius: 4px;
-    padding: 9px 18px;
-    font-size: 13.5px;
+    padding: 8px 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.05);
@@ -1151,6 +1271,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    white-space: nowrap;
 }
 
 .btn-chip:hover {

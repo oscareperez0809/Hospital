@@ -40,30 +40,35 @@ $tituloHeader = 'Control de Seguimiento Clínico';
             <!-- Contenido de Tabla de Seguimiento (Fiel a la imagen) -->
             <section class="content-body">
                 
-                <!-- Fila 1: Botones REGISTRAR, HISTORIAL y filtros -->
-                <div class="filter-chips-row">
-                    <a href="formulario_seguimiento.php" class="btn-chip" style="font-weight: 700;">
-                        REGISTRAR
-                    </a>
-                    <button type="button" class="btn-chip">HISTORIAL</button>
-                    <button type="button" class="btn-chip">Bordes</button>
-                    <button type="button" class="btn-chip">Exudados</button>
-                    <button type="button" class="btn-chip">Dolor_Eva</button>
-                    <button type="button" class="btn-chip">Eritema</button>
-                </div>
+                <!-- Barra superior unificada con REGISTRAR, filtros y BUSCAR -->
+                <div class="table-toolbar-container">
+                    <div class="table-toolbar-left">
+                        <a href="formulario_seguimiento.php" class="btn-chip" style="font-weight: 700;">
+                            REGISTRAR
+                        </a>
+                        <button type="button" class="btn-chip">HISTORIAL</button>
+                        <button type="button" class="btn-chip">Bordes</button>
+                        <button type="button" class="btn-chip">Exudados</button>
+                        <button type="button" class="btn-chip">Dolor_Eva</button>
+                        <button type="button" class="btn-chip">Eritema</button>
+                    </div>
 
-                <!-- Fila 2: Buscador específico con ícono de lupa -->
-                <div class="search-box-seguimiento">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input 
-                        type="text" 
-                        id="searchPatients" 
-                        placeholder="Buscar paciente, cama o ID..."
-                        autocomplete="off"
-                    >
+                    <!-- Cápsula BUSCAR a la derecha (Misma forma y posición que las demás tablas) -->
+                    <div class="search-pill-container">
+                        <input 
+                            type="text" 
+                            id="searchPatients" 
+                            class="search-pill-input" 
+                            placeholder="BUSCAR"
+                            autocomplete="off"
+                        >
+                        <span class="search-pill-icon" title="Buscar">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Tabla de Seguimiento Clínico -->
