@@ -1,0 +1,366 @@
+/* ========================================================
+   VARIABLES CSS (Soporte Modo Claro y Modo Oscuro)
+   ======================================================== */
+:root {
+    color-scheme: light;
+    --bg-body: #f5f6f8;
+    --bg-card: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --text-label: #374151;
+    --border-input: #e5e7eb;
+    --bg-input: #ffffff;
+    --placeholder-color: #9ca3af;
+    --brand-wine: #a3262a;
+    --brand-wine-hover: #891d21;
+    --brand-wine-shadow: rgba(163, 38, 42, 0.32);
+    --card-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.06), 0 0 1px 1px rgba(0, 0, 0, 0.02);
+    --alert-error-bg: #fef2f2;
+    --alert-error-text: #991b1b;
+    --alert-error-border: #fecaca;
+    --alert-success-bg: #f0fdf4;
+    --alert-success-text: #166534;
+    --alert-success-border: #bbf7d0;
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+    --bg-body: #0d1117;
+    --bg-card: #161b22;
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --text-label: #c9d1d9;
+    --border-input: #30363d;
+    --bg-input: #0d1117;
+    --placeholder-color: #6e7681;
+    --brand-wine: #b82d31;
+    --brand-wine-hover: #9c2226;
+    --brand-wine-shadow: rgba(184, 45, 49, 0.45);
+    --card-shadow: 0 15px 40px -5px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+    --alert-error-bg: rgba(239, 68, 68, 0.15);
+    --alert-error-text: #fca5a5;
+    --alert-error-border: rgba(239, 68, 68, 0.3);
+    --alert-success-bg: rgba(34, 197, 94, 0.15);
+    --alert-success-text: #86efac;
+    --alert-success-border: rgba(34, 197, 94, 0.3);
+}
+
+/* ========================================================
+   RESETEO Y ESTILOS BASE
+   ======================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* ========================================================
+   CABECERA SUPERIOR & BOTÓN MODO OSCURO
+   ======================================================== */
+.header-top {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    z-index: 10;
+}
+
+.btn-theme {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--brand-wine);
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px var(--brand-wine-shadow);
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-theme:hover {
+    background-color: var(--brand-wine-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px var(--brand-wine-shadow);
+}
+
+.btn-theme:active {
+    transform: translateY(1px);
+}
+
+.btn-theme .icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* ========================================================
+   CONTENEDOR PRINCIPAL Y TARJETA DE LOGIN
+   ======================================================== */
+.login-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+}
+
+.login-card {
+    background-color: var(--bg-card);
+    width: 100%;
+    max-width: 440px;
+    border-radius: 28px;
+    box-shadow: var(--card-shadow);
+    padding: 44px 40px 40px 40px;
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================================
+   LOGOTIPO ISSSTE
+   ======================================================== */
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.issste-logo {
+    width: 86px;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    transition: filter 0.25s ease;
+}
+
+[data-theme="dark"] .issste-logo {
+    filter: invert(1);
+    mix-blend-mode: screen;
+}
+
+/* ========================================================
+   TÍTULOS
+   ======================================================== */
+.card-header {
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.card-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.25;
+}
+
+.card-subtitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-top: 6px;
+}
+
+/* ========================================================
+   ALERTAS DE MENSAJE (PHP)
+   ======================================================== */
+.alert {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+}
+
+.alert-error {
+    background-color: var(--alert-error-bg);
+    color: var(--alert-error-text);
+    border-color: var(--alert-error-border);
+}
+
+.alert-success {
+    background-color: var(--alert-success-bg);
+    color: var(--alert-success-text);
+    border-color: var(--alert-success-border);
+}
+
+/* ========================================================
+   CAMPOS DEL FORMULARIO
+   ======================================================== */
+.login-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    margin-bottom: 18px;
+    text-align: left;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-label);
+    margin-bottom: 8px;
+}
+
+.form-input {
+    width: 100%;
+    height: 48px;
+    padding: 12px 16px;
+    background-color: var(--bg-input);
+    color: var(--text-primary);
+    border: 1.5px solid var(--border-input);
+    border-radius: 12px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input::placeholder {
+    color: var(--placeholder-color);
+}
+
+.form-input:focus {
+    border-color: var(--brand-wine);
+    box-shadow: 0 0 0 3.5px rgba(163, 38, 42, 0.15);
+}
+
+/* Wrapper para campo contraseña con botón de ojo */
+.input-password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-password-wrapper .form-input {
+    padding-right: 48px;
+}
+
+.btn-eye-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color 0.2s ease;
+}
+
+.btn-eye-toggle:hover {
+    color: var(--text-primary);
+}
+
+.btn-eye-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ========================================================
+   ENLACE DE RECUPERAR CONTRASEÑA
+   ======================================================== */
+.forgot-password-container {
+    text-align: right;
+    margin-top: 4px;
+    margin-bottom: 24px;
+}
+
+.forgot-password-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--brand-wine);
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+    opacity: 0.9;
+}
+
+/* ========================================================
+   BOTÓN SUBMIT INICIAR SESIÓN
+   ======================================================== */
+.btn-submit {
+    width: 100%;
+    height: 50px;
+    background-color: var(--brand-wine);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 22px var(--brand-wine-shadow);
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-submit:hover {
+    background-color: var(--brand-wine-hover);
+    transform: translateY(-1.5px);
+    box-shadow: 0 10px 26px var(--brand-wine-shadow);
+}
+
+.btn-submit:active {
+    transform: translateY(1px);
+    box-shadow: 0 4px 12px var(--brand-wine-shadow);
+}
+
+/* ========================================================
+   RESPONSIVE DESIGN (MÓVILES)
+   ======================================================== */
+@media (max-width: 480px) {
+    .header-top {
+        top: 16px;
+        right: 16px;
+    }
+
+    .btn-theme {
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+
+    .login-card {
+        padding: 32px 24px 28px 24px;
+        border-radius: 20px;
+    }
+
+    .card-title {
+        font-size: 22px;
+    }
+
+    .card-subtitle {
+        font-size: 13px;
+    }
+}
