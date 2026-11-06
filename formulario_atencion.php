@@ -4,15 +4,64 @@ require_once "conexion.php";
 $paginaActiva = 'atencion';
 $tituloHeader = 'Registro de Atención Médica';
 
+$mensajeExito = '';
+$mensajeError = '';
+
+// 1. Procesar Registro (INSERT) o Edición (UPDATE) cuando se envía el formulario
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
+    $idAtencion = intval($_POST['id_atencion'] ?? 0);
+    $cedula = trim($_POST['cedula'] ?? '');
+    $idDepartamento = intval($_POST['id_departamento'] ?? 0);
+    $idEspecialidad = intval($_POST['id_especialidad'] ?? 0);
+    $idEtiologia = intval($_POST['id_etiologia'] ?? 0);
+    $fechaIngreso = trim($_POST['fecha_ingreso'] ?? date('Y-m-d H:i:s'));
+    $fechaEgreso = trim($_POST['fecha_egreso'] ?? '');
+    $cama = !empty($_POST['cama']) ? intval($_POST['cama']) : null;
+    $piso = !empty($_POST['piso']) ? intval($_POST['piso']) : null;
+    $padecimiento = trim($_POST['padecimiento'] ?? '');
+
+    $fechaIngresoVal = !empty($fechaIngreso) ? $fechaIngreso : date('Y-m-d H:i:s');
+    $fechaEgresoVal = !empty($fechaEgreso) ? $fechaEgreso : null;
+
+    if (!empty($conectar) && !empty($cedula)) {
+        if ($idAtencion > 0) {
+            // UPDATE
+            $stmt = mysqli_prepare($conectar, "UPDATE atencion SET cedula=?, id_departamento=?, id_especialidad=?, id_etiologia=?, fecha_ingreso=?, fecha_egreso=?, cama=?, piso=?, padecimiento=? WHERE id_atencion=?");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "siiississi", $cedula, $idDepartamento, $idEspecialidad, $idEtiologia, $fechaIngresoVal, $fechaEgresoVal, $cama, $piso, $padecimiento, $idAtencion);
+                if (mysqli_stmt_execute($stmt)) {
+                    $mensajeExito = "Atención médica #{$idAtencion} actualizada exitosamente.";
+                } else {
+                    $mensajeError = "Error al actualizar atención: " . mysqli_stmt_error($stmt);
+                }
+            }
+        } else {
+            // INSERT
+            $stmt = mysqli_prepare($conectar, "INSERT INTO atencion (cedula, id_departamento, id_especialidad, id_etiologia, fecha_ingreso, fecha_egreso, cama, piso, padecimiento) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "siiississ", $cedula, $idDepartamento, $idEspecialidad, $idEtiologia, $fechaIngresoVal, $fechaEgresoVal, $cama, $piso, $padecimiento);
+                if (mysqli_stmt_execute($stmt)) {
+                    $nuevoId = mysqli_insert_id($conectar);
+                    $mensajeExito = "Atención médica registrada exitosamente (ID: ATN-" . str_pad($nuevoId, 3, '0', STR_PAD_LEFT) . ").";
+                } else {
+                    $mensajeError = "Error al registrar atención: " . mysqli_stmt_error($stmt);
+                }
+            }
+        }
+    } else {
+        $mensajeError = "La cédula del paciente es obligatoria.";
+    }
+}
+
 // Función para obtener opciones relacionales
-function cargarCatalogo($conectar, $tabla, $campoId, $campoTexto, $defaults = []) {
+function cargarCatalogo($conectar, $tabla, $campoId, $campoTexto, $defaults = [])
+{
     $lista = [];
     if (!empty($conectar)) {
         $q = @mysqli_query($conectar, "SELECT * FROM `$tabla` ORDER BY `$campoTexto` ASC");
         if ($q && mysqli_num_rows($q) > 0) {
             while ($r = mysqli_fetch_assoc($q)) $lista[] = $r;
         } elseif (!empty($defaults)) {
-            // Seeding preventivo si la tabla relacional aún no tiene registros
             foreach ($defaults as $def) {
                 @mysqli_query($conectar, "INSERT INTO `$tabla` (`$campoTexto`) VALUES ('" . mysqli_real_escape_string($conectar, $def) . "')");
             }
@@ -27,15 +76,33 @@ function cargarCatalogo($conectar, $tabla, $campoId, $campoTexto, $defaults = []
 
 // Cargar catálogos relacionales de MySQL
 $deptos = cargarCatalogo($conectar, 'departamentos', 'id_departamento', 'departamento', [
-    'Urgencias', 'Cirugía General', 'Medicina Interna', 'Pediatría', 'Ginecología y Obstetricia', 'Oncología', 'Traumatología'
+    'Urgencias',
+    'Cirugía General',
+    'Medicina Interna',
+    'Pediatría',
+    'Ginecología y Obstetricia',
+    'Oncología',
+    'Traumatología'
 ]);
 
 $especialidades = cargarCatalogo($conectar, 'especialidades', 'id_especialidad', 'especialidad', [
-    'Medicina Interna', 'Cardiología', 'Pediatría', 'Obstetricia', 'Traumatología', 'Oncología Médica', 'Cirugía General'
+    'Medicina Interna',
+    'Cardiología',
+    'Pediatría',
+    'Obstetricia',
+    'Traumatología',
+    'Oncología Médica',
+    'Cirugía General'
 ]);
 
 $etiologias = cargarCatalogo($conectar, 'etiologia', 'id_etiologia', 'etiologia', [
-    'Infecciosa', 'Traumática', 'Quirúrgica', 'Degenerativa', 'Vascular', 'Congénita', 'Oncológica'
+    'Infecciosa',
+    'Traumática',
+    'Quirúrgica',
+    'Degenerativa',
+    'Vascular',
+    'Congénita',
+    'Oncológica'
 ]);
 
 // Cargar lista de pacientes registrados
@@ -49,7 +116,7 @@ if (!empty($conectar)) {
 
 // Valores por si se viene de editar
 $idAtencion = intval($_GET['id_atencion'] ?? 0);
-$cedula = $_GET['cedula'] ?? '';
+$cedula = '';
 $idDepartamento = 0;
 $idEspecialidad = 0;
 $idEtiologia = 0;
@@ -66,7 +133,7 @@ if ($idAtencion > 0 && !empty($conectar)) {
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
         if ($res && $atn = mysqli_fetch_assoc($res)) {
-            $cedula = $atn['cedula'] ?? $cedula;
+            $cedula = $atn['cedula'] ?? '';
             $idDepartamento = intval($atn['id_departamento'] ?? 0);
             $idEspecialidad = intval($atn['id_especialidad'] ?? 0);
             $idEtiologia = intval($atn['id_etiologia'] ?? 0);
@@ -82,6 +149,7 @@ $esEdicion = ($idAtencion > 0);
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -101,22 +169,36 @@ $esEdicion = ($idAtencion > 0);
         })();
     </script>
 </head>
+
 <body>
 
     <div class="dashboard-container">
-        
+
         <!-- Barra Lateral con ATENCIÓN activo -->
         <?php include 'sidebar.php'; ?>
 
         <!-- Área Principal -->
         <main class="main-wrapper">
-            
+
             <!-- Cabecera Superior -->
             <?php include 'header.php'; ?>
 
             <!-- Formulario Crear Atención -->
             <section class="content-body">
-                
+
+                <!-- Alertas de éxito o error -->
+                <?php if (!empty($mensajeExito)): ?>
+                    <div style="background-color: rgba(34, 197, 94, 0.15); border: 1.5px solid #22c55e; color: #166534; padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600;">
+                        ✓ <?= htmlspecialchars($mensajeExito) ?> <a href="tablas_atencion.php" style="color: inherit; text-decoration: underline; margin-left: 10px;">Ver listado</a>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (!empty($mensajeError)): ?>
+                    <div style="background-color: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #991b1b; padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600;">
+                        ⚠ <?= htmlspecialchars($mensajeError) ?>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Botón VOLVER rectangular gris -->
                 <div class="form-toolbar">
                     <a href="tablas_atencion.php" class="btn-volver" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
@@ -131,8 +213,9 @@ $esEdicion = ($idAtencion > 0);
                         <p class="form-register-subtitle">Complete la información clínica del paciente y asignación hospitalaria.</p>
                     </div>
 
-                    <form action="tablas_atencion.php" method="POST" class="patient-form">
-                        
+                    <!-- Cambiado action="" para procesar en el mismo archivo -->
+                    <form action="" method="POST" class="patient-form">
+
                         <?php if ($esEdicion): ?>
                             <input type="hidden" name="id_atencion" value="<?= $idAtencion ?>">
                         <?php endif; ?>
@@ -152,7 +235,7 @@ $esEdicion = ($idAtencion > 0);
                                                 </option>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <option value="<?= htmlspecialchars($cedula) ?>" selected><?= !empty($cedula) ? htmlspecialchars($cedula) : 'No hay pacientes aún' ?></option>
+                                            <option value="" disabled>No hay pacientes registrados</option>
                                         <?php endif; ?>
                                     </select>
                                 </div>
@@ -210,26 +293,24 @@ $esEdicion = ($idAtencion > 0);
                             <div class="form-field">
                                 <label for="atnIngreso" class="form-label">Fecha de Ingreso</label>
                                 <div class="input-with-icon">
-                                    <input 
-                                        type="date" 
-                                        id="atnIngreso" 
-                                        name="fecha_ingreso" 
-                                        class="form-control" 
+                                    <input
+                                        type="date"
+                                        id="atnIngreso"
+                                        name="fecha_ingreso"
+                                        class="form-control"
                                         value="<?= htmlspecialchars($fechaIngreso) ?>"
-                                        required
-                                    >
+                                        required>
                                 </div>
                             </div>
                             <div class="form-field">
                                 <label for="atnEgreso" class="form-label">Fecha de Egreso (Opcional)</label>
                                 <div class="input-with-icon">
-                                    <input 
-                                        type="date" 
-                                        id="atnEgreso" 
-                                        name="fecha_egreso" 
-                                        class="form-control" 
-                                        value="<?= htmlspecialchars($fechaEgreso) ?>"
-                                    >
+                                    <input
+                                        type="date"
+                                        id="atnEgreso"
+                                        name="fecha_egreso"
+                                        class="form-control"
+                                        value="<?= htmlspecialchars($fechaEgreso) ?>">
                                 </div>
                             </div>
                         </div>
@@ -237,13 +318,12 @@ $esEdicion = ($idAtencion > 0);
                         <!-- Fila 4: Padecimiento (Textarea) -->
                         <div class="form-field-full">
                             <label for="atnPadecimiento" class="form-label">Padecimiento / Diagnóstico</label>
-                            <textarea 
-                                id="atnPadecimiento" 
-                                name="padecimiento" 
-                                class="form-control form-textarea" 
-                                placeholder="Describa el diagnóstico o motivo de ingreso" 
-                                rows="3"
-                            ><?= htmlspecialchars($padecimiento) ?></textarea>
+                            <textarea
+                                id="atnPadecimiento"
+                                name="padecimiento"
+                                class="form-control form-textarea"
+                                placeholder="Describa el diagnóstico o motivo de ingreso"
+                                rows="3"><?= htmlspecialchars($padecimiento) ?></textarea>
                         </div>
 
                         <!-- Fila 5: Cama, Piso y Botón Guardar -->
@@ -251,25 +331,23 @@ $esEdicion = ($idAtencion > 0);
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                 <div class="form-field">
                                     <label for="atnCama" class="form-label">Cama</label>
-                                    <input 
-                                        type="number" 
-                                        id="atnCama" 
-                                        name="cama" 
-                                        class="form-control" 
-                                        placeholder="Ej. 205" 
-                                        value="<?= htmlspecialchars($cama) ?>"
-                                    >
+                                    <input
+                                        type="number"
+                                        id="atnCama"
+                                        name="cama"
+                                        class="form-control"
+                                        placeholder="Ej. 205"
+                                        value="<?= htmlspecialchars($cama) ?>">
                                 </div>
                                 <div class="form-field">
                                     <label for="atnPiso" class="form-label">Piso</label>
-                                    <input 
-                                        type="number" 
-                                        id="atnPiso" 
-                                        name="piso" 
-                                        class="form-control" 
+                                    <input
+                                        type="number"
+                                        id="atnPiso"
+                                        name="piso"
+                                        class="form-control"
                                         placeholder="Ej. 2"
-                                        value="<?= htmlspecialchars($piso) ?>"
-                                    >
+                                        value="<?= htmlspecialchars($piso) ?>">
                                 </div>
                             </div>
                             <div class="form-actions-btn" style="display: flex; justify-content: flex-end;">
@@ -290,4 +368,5 @@ $esEdicion = ($idAtencion > 0);
     <!-- Scripts -->
     <script src="dashboard.js"></script>
 </body>
+
 </html>
