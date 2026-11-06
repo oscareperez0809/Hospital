@@ -4,26 +4,7 @@ require_once "conexion.php";
 $paginaActiva = 'seguimiento';
 $tituloHeader = 'Control de Seguimiento Clínico';
 
-// 1. Procesar Registro desde formulario_seguimiento.php (POST)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['paciente_cama']) || isset($_POST['paciente']))) {
-    $paciente = trim($_POST['paciente_cama'] ?? ($_POST['paciente'] ?? ''));
-    $cama = trim($_POST['cama'] ?? '');
-    $dolor = trim($_POST['dolor'] ?? '');
-    $bordes = trim($_POST['bordes'] ?? '');
-    $exudados = trim($_POST['exudados'] ?? '');
-    $eritema = trim($_POST['eritema'] ?? '');
-    $fecha = trim($_POST['fecha'] ?? date('d/m/y'));
-
-    if (!empty($conectar) && !empty($paciente)) {
-        $stmt = mysqli_prepare($conectar, "INSERT INTO seguimientos (paciente, cama, fecha, dolor_eva, bordes, exudados, eritema) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "sssssss", $paciente, $cama, $fecha, $dolor, $bordes, $exudados, $eritema);
-            mysqli_stmt_execute($stmt);
-        }
-    }
-}
-
-// 2. Procesar Eliminación (?eliminar_id=...)
+// 1. Procesar Eliminación (?eliminar_id=...)
 if (isset($_GET['eliminar_id']) && !empty($conectar)) {
     $idDel = intval($_GET['eliminar_id']);
     $stmt = mysqli_prepare($conectar, "DELETE FROM seguimiento WHERE id_seguimiento = ?");
@@ -71,29 +52,27 @@ if (isset($_GET['eliminar_id']) && !empty($conectar)) {
             <!-- Cabecera Superior -->
             <?php include 'header.php'; ?>
 
-            <!-- Contenido de Tabla de Seguimiento (Fiel a la imagen) -->
+            <!-- Contenido de Tabla de Seguimiento -->
             <section class="content-body">
 
-                <!-- Barra superior unificada con REGISTRAR, filtros y BUSCAR -->
+                <!-- Barra superior unificada con REGISTRAR y filtros por datos de paciente/ubicación -->
                 <div class="table-toolbar-container">
                     <div class="table-toolbar-left">
-                        <a href="formulario_seguimiento.php" class="btn-chip" style="font-weight: 700;">
+                        <a href="formulario_seguimiento.php" class="btn-chip" style="font-weight: 700; text-decoration: none;">
                             REGISTRAR
                         </a>
-                        <button type="button" class="btn-chip">HISTORIAL</button>
-                        <button type="button" class="btn-chip">Bordes</button>
-                        <button type="button" class="btn-chip">Exudados</button>
-                        <button type="button" class="btn-chip">Dolor_Eva</button>
-                        <button type="button" class="btn-chip">Eritema</button>
+                        <button type="button" class="btn-chip active" data-filter="todos">Todos</button>
+                        <button type="button" class="btn-chip" data-filter="piso-1">Piso 1</button>
+                        <button type="button" class="btn-chip" data-filter="piso-2">Piso 2</button>
                     </div>
 
-                    <!-- Cápsula BUSCAR a la derecha (Misma forma y posición que las demás tablas) -->
+                    <!-- Cápsula BUSCAR por nombre de paciente o cama -->
                     <div class="search-pill-container">
                         <input
                             type="text"
                             id="searchPatients"
                             class="search-pill-input"
-                            placeholder="BUSCAR"
+                            placeholder="BUSCAR PACIENTE / CAMA"
                             autocomplete="off">
                         <span class="search-pill-icon" title="Buscar">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -111,9 +90,9 @@ if (isset($_GET['eliminar_id']) && !empty($conectar)) {
                             <tr>
                                 <th>ID SEG.</th>
                                 <th>PACIENTE</th>
-                                <th>CAMA</th>
+                                <th>UBICACIÓN (CAMA / PISO)</th>
                                 <th>FECHA</th>
-                                <th>DOLOR</th>
+                                <th>DOLOR (EVA)</th>
                                 <th>ACCIONES</th>
                             </tr>
                         </thead>
@@ -121,33 +100,53 @@ if (isset($_GET['eliminar_id']) && !empty($conectar)) {
                             <?php
                             $haySeguimientosBD = false;
                             if (!empty($conectar)) {
-                                $consultaSeg = @mysqli_query($conectar, "SELECT * FROM seguimiento ORDER BY id_seguimiento DESC");
+                                // Consulta inteligente uniendo seguimiento con atenciones y pacientes para obtener datos reales
+                                $sqlSeg = "SELECT s.*, 
+                                                  p.nombre AS pac_nombre, p.apellido_paterno AS pac_paterno, p.apellido_materno AS pac_materno,
+                                                  a.cama AS atn_cama, a.piso AS atn_piso
+                                           FROM seguimiento s
+                                           LEFT JOIN atencion a ON s.id_atencion = a.id_atencion
+                                           LEFT JOIN pacientes p ON a.cedula = p.cedula
+                                           ORDER BY s.id_seguimiento DESC";
+
+                                $consultaSeg = @mysqli_query($conectar, $sqlSeg);
+
                                 if ($consultaSeg && mysqli_num_rows($consultaSeg) > 0) {
                                     $haySeguimientosBD = true;
                                     while ($s = mysqli_fetch_assoc($consultaSeg)) {
-                                        $idSeg = "SEG-" . str_pad($s['	id_seguimiento'], 3, '0', STR_PAD_LEFT);
-                                        $pac = htmlspecialchars($s['paciente']);
-                                        $cam = htmlspecialchars($s['cama']);
-                                        $fec = htmlspecialchars($s['fecha']);
-                                        $dol = htmlspecialchars($s['dolor_eva'] ?? ($s['dolor'] ?? ''));
+                                        $idVal = $s['id_seguimiento'] ?? 0;
+                                        $idSeg = "SEG-" . str_pad($idVal, 3, '0', STR_PAD_LEFT);
+
+                                        // Obtener nombre del paciente (ya sea por relación o respaldado por texto plano)
+                                        $nomPac = trim(($s['pac_nombre'] ?? '') . ' ' . ($s['pac_paterno'] ?? '') . ' ' . ($s['pac_materno'] ?? ''));
+                                        if (empty($nomPac)) {
+                                            $nomPac = $s['paciente'] ?? 'Paciente general';
+                                        }
+
+                                        // Ubicación (Cama y Piso)
+                                        $cama = !empty($s['atn_cama']) ? $s['atn_cama'] : ($s['cama'] ?? '--');
+                                        $piso = !empty($s['atn_piso']) ? "Piso " . $s['atn_piso'] : 'Hospitalización';
+
+                                        $fec = htmlspecialchars($s['fecha'] ?? '');
+                                        $dol = htmlspecialchars($s['dolor_eva'] ?? ($s['dolor'] ?? '--'));
                             ?>
-                                        <tr>
+                                        <tr data-piso="<?= !empty($s['atn_piso']) ? $s['atn_piso'] : '' ?>">
                                             <td class="cell-cedula"><?= $idSeg ?></td>
-                                            <td><?= $pac ?></td>
+                                            <td><strong><?= htmlspecialchars($nomPac) ?></strong></td>
                                             <td>
                                                 <span class="cama-icon-wrapper">
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                                         <path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"></path>
                                                     </svg>
-                                                    <?= $cam ?>
+                                                    Cama <?= $cama ?> (<?= $piso ?>)
                                                 </span>
                                             </td>
                                             <td><?= $fec ?></td>
                                             <td><?= $dol ?></td>
                                             <td class="cell-actions">
-                                                <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
-                                                <a href="formulario_seguimiento.php?paciente=<?= urlencode($s['paciente']) ?>&cama=<?= urlencode($cam) ?>&dolor=<?= urlencode($dol) ?>" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
-                                                <a href="tablas_seguimiento.php?eliminar_id=<?= urlencode($s['id']) ?>" class="btn-tbl btn-tbl-delete" onclick="return confirm('¿Seguro que deseas eliminar este seguimiento clínico?');" style="text-decoration:none; display:inline-flex; align-items:center;">Borrar</a>
+                                                <a href="ver_seguimiento.php?id_seguimiento=<?= urlencode($idVal) ?>" class="btn-tbl btn-tbl-view" style="text-decoration:none; display:inline-flex; align-items:center;">Ver</a>
+                                                <a href="modificar_seguimiento.php?id_seguimiento=<?= urlencode($idVal) ?>" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
+                                                <a href="tablas_seguimiento.php?eliminar_id=<?= urlencode($idVal) ?>" class="btn-tbl btn-tbl-delete" onclick="return confirm('¿Seguro que deseas eliminar este seguimiento clínico?');" style="text-decoration:none; display:inline-flex; align-items:center;">Borrar</a>
                                             </td>
                                         </tr>
                                 <?php
@@ -155,84 +154,11 @@ if (isset($_GET['eliminar_id']) && !empty($conectar)) {
                                 }
                             }
 
-                            // Datos iniciales de respaldo
                             if (!$haySeguimientosBD):
                                 ?>
                                 <tr>
-                                    <td class="cell-cedula">SEG-001</td>
-                                    <td>Pérez Pérez, Juan</td>
-                                    <td>
-                                        <span class="cama-icon-wrapper">
-                                            <!-- Ícono estilizado de Cama de hospital -->
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"></path>
-                                            </svg>
-                                            205
-                                        </span>
-                                    </td>
-                                    <td>01/02/26</td>
-                                    <td>3 EVA</td>
-                                    <td class="cell-actions">
-                                        <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
-                                        <a href="formulario_seguimiento.php?paciente=Pérez Pérez, Juan&dolor=3 EVA" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
-                                        <button class="btn-tbl btn-tbl-delete" type="button">Borrar</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="cell-cedula">SEG-002</td>
-                                    <td>García López, María</td>
-                                    <td>
-                                        <span class="cama-icon-wrapper">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"></path>
-                                            </svg>
-                                            102
-                                        </span>
-                                    </td>
-                                    <td>01/02/26</td>
-                                    <td>7 EVA</td>
-                                    <td class="cell-actions">
-                                        <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
-                                        <a href="formulario_seguimiento.php?paciente=García López, María&dolor=7 EVA" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
-                                        <button class="btn-tbl btn-tbl-delete" type="button">Borrar</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="cell-cedula">SEG-003</td>
-                                    <td>Ríos Cruz, Carlos</td>
-                                    <td>
-                                        <span class="cama-icon-wrapper">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"></path>
-                                            </svg>
-                                            314
-                                        </span>
-                                    </td>
-                                    <td>01/02/26</td>
-                                    <td>2 EVA</td>
-                                    <td class="cell-actions">
-                                        <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
-                                        <a href="formulario_seguimiento.php?paciente=Ríos Cruz, Carlos&dolor=2 EVA" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
-                                        <button class="btn-tbl btn-tbl-delete" type="button">Borrar</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="cell-cedula">SEG-004</td>
-                                    <td>Sánchez M., Ana</td>
-                                    <td>
-                                        <span class="cama-icon-wrapper">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"></path>
-                                            </svg>
-                                            201
-                                        </span>
-                                    </td>
-                                    <td>01/02/26</td>
-                                    <td>10 EVA</td>
-                                    <td class="cell-actions">
-                                        <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
-                                        <a href="formulario_seguimiento.php?paciente=Sánchez M., Ana&dolor=10 EVA" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
-                                        <button class="btn-tbl btn-tbl-delete" type="button">Borrar</button>
+                                    <td colspan="6" style="text-align:center; padding: 40px; color: var(--text-secondary);">
+                                        No hay registros de seguimiento clínico en la base de datos.
                                     </td>
                                 </tr>
                             <?php endif; ?>
@@ -245,7 +171,41 @@ if (isset($_GET['eliminar_id']) && !empty($conectar)) {
 
     </div>
 
-    <!-- Scripts -->
+    <!-- Script de filtrado rápido por texto y ubicación -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('searchPatients');
+            const tableRows = document.querySelectorAll('#patientsTable tbody tr');
+
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase().trim();
+                    tableRows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(term) ? '' : 'none';
+                    });
+                });
+            }
+
+            // Filtros por botones superiores
+            document.querySelectorAll('.table-toolbar-left .btn-chip[data-filter]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.table-toolbar-left .btn-chip').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const filter = btn.dataset.filter;
+
+                    tableRows.forEach(row => {
+                        if (filter === 'todos') {
+                            row.style.display = '';
+                        } else {
+                            const pisoRow = 'piso-' + row.dataset.piso;
+                            row.style.display = (pisoRow === filter) ? '' : 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
     <script src="dashboard.js"></script>
 </body>
 
