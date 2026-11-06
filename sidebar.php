@@ -24,9 +24,9 @@ $paginaActiva = $paginaActiva ?? 'inicio';
         <a href="tablas_seguimiento.php" class="nav-link <?= ($paginaActiva === 'seguimiento') ? 'active' : '' ?>">
             SEGUIMIENTO
         </a>
-        <a href="tablas_usuarios.php" class="nav-link <?= ($paginaActiva === 'usuarios') ? 'active' : '' ?>">
+        <!-- <a href="tablas_usuarios.php" class="nav-link <?= ($paginaActiva === 'usuarios') ? 'active' : '' ?>">
             USUARIOS
-        </a>
+        </a> -->
     </nav>
 
     <!-- Cerrar sesión -->

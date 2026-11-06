@@ -1,14 +1,37 @@
 <?php
 session_start();
+require_once "conexion.php";
 $paginaActiva = 'paciente';
 $tituloHeader = 'Registro de Pacientes';
 
 // Valores por si se viene de editar
 $cedula = $_GET['cedula'] ?? '';
-$nombre = $_GET['nombre'] ?? '';
-$paterno = $_GET['paterno'] ?? '';
-$materno = $_GET['materno'] ?? '';
-$genero = $_GET['genero'] ?? '';
+$nombre = '';
+$paterno = '';
+$materno = '';
+$nacimiento = '';
+$genero = '';
+$alergias = '';
+$cirugia = '';
+
+// Si viene la cédula y la BD está disponible, cargar los datos actuales del paciente
+if (!empty($cedula) && !empty($conectar)) {
+    $stmt = mysqli_prepare($conectar, "SELECT * FROM pacientes WHERE cedula = ? LIMIT 1");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "s", $cedula);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        if ($res && $p = mysqli_fetch_assoc($res)) {
+            $nombre = $p['nombre'] ?? '';
+            $paterno = $p['apellido_paterno'] ?? ($p['paterno'] ?? '');
+            $materno = $p['apellido_materno'] ?? ($p['materno'] ?? '');
+            $nacimiento = !empty($p['fecha_nacimiento']) ? substr($p['fecha_nacimiento'], 0, 10) : '';
+            $genero = $p['genero'] ?? '';
+            $alergias = $p['alergias'] ?? '';
+            $cirugia = !empty($p['fecha_cirugia']) ? substr($p['fecha_cirugia'], 0, 10) : '';
+        }
+    }
+}
 $esEdicion = !empty($cedula);
 ?>
 <!DOCTYPE html>
@@ -64,6 +87,11 @@ $esEdicion = !empty($cedula);
 
                     <form action="tablas_pacientes.php" method="POST" class="patient-form">
                         
+                        <?php if ($esEdicion): ?>
+                            <!-- Campo oculto para conservar o actualizar la cédula original -->
+                            <input type="hidden" name="cedula_original" value="<?= htmlspecialchars($cedula) ?>">
+                        <?php endif; ?>
+
                         <!-- Fila 1: Cédula y Nombre(s) -->
                         <div class="form-row-2">
                             <div class="form-field">
@@ -73,7 +101,7 @@ $esEdicion = !empty($cedula);
                                     id="regCedula" 
                                     name="cedula" 
                                     class="form-control" 
-                                    placeholder="Ingrese la cédula" 
+                                    placeholder="Ingrese la cédula (ej. 12-4567-8910)" 
                                     value="<?= htmlspecialchars($cedula) ?>"
                                     required
                                 >
@@ -99,7 +127,7 @@ $esEdicion = !empty($cedula);
                                 <input 
                                     type="text" 
                                     id="regPaterno" 
-                                    name="paterno" 
+                                    name="apellido_paterno" 
                                     class="form-control" 
                                     placeholder="Ingrese el apellido paterno" 
                                     value="<?= htmlspecialchars($paterno) ?>"
@@ -111,7 +139,7 @@ $esEdicion = !empty($cedula);
                                 <input 
                                     type="text" 
                                     id="regMaterno" 
-                                    name="materno" 
+                                    name="apellido_materno" 
                                     class="form-control" 
                                     placeholder="Ingrese el apellido materno" 
                                     value="<?= htmlspecialchars($materno) ?>"
@@ -128,9 +156,9 @@ $esEdicion = !empty($cedula);
                                     <input 
                                         type="date" 
                                         id="regNacimiento" 
-                                        name="nacimiento" 
+                                        name="fecha_nacimiento" 
                                         class="form-control" 
-                                        placeholder="DD / MM / AAAA"
+                                        value="<?= htmlspecialchars($nacimiento) ?>"
                                     >
                                 </div>
                             </div>
@@ -153,9 +181,9 @@ $esEdicion = !empty($cedula);
                                 id="regAlergias" 
                                 name="alergias" 
                                 class="form-control form-textarea" 
-                                placeholder="Describa las alergias conocidas" 
+                                placeholder="Describa las alergias conocidas (ej. Penicilina, Ninguna)" 
                                 rows="3"
-                            ></textarea>
+                            ><?= htmlspecialchars($alergias) ?></textarea>
                         </div>
 
                         <!-- Fila 5: Fecha de Cirugía y Botón Guardar -->
@@ -166,15 +194,15 @@ $esEdicion = !empty($cedula);
                                     <input 
                                         type="date" 
                                         id="regCirugia" 
-                                        name="cirugia" 
+                                        name="fecha_cirugia" 
                                         class="form-control" 
-                                        placeholder="DD / MM / AAAA"
+                                        value="<?= htmlspecialchars($cirugia) ?>"
                                     >
                                 </div>
                             </div>
                             <div class="form-actions-right">
                                 <button type="submit" class="btn-guardar">
-                                    Guardar
+                                    <?= $esEdicion ? 'Actualizar Paciente' : 'Guardar Paciente' ?>
                                 </button>
                             </div>
                         </div>

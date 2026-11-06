@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,9 +20,11 @@
         })();
     </script>
 </head>
+
 <body>
     <?php
     session_start();
+    require_once "conexion.php";
     $mensajeError = "";
     $mensajeExito = "";
 
@@ -35,16 +38,47 @@
         } elseif (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
             $mensajeError = "Ingresa un correo electrónico válido.";
         } else {
-            // Ejemplo de verificación de credenciales simulada
-            // Aquí puedes conectar a tu base de datos MySQL / PostgreSQL
-            $usuarioValido = "usuario@issste.gob.mx";
-            $passwordValido = "12345678";
+            $loginExitoso = false;
 
-            if ($correo === $usuarioValido && $password === $passwordValido) {
-                $_SESSION["usuario"] = $correo;
+            // 1. Validar contra la Base de Datos MySQL si hay conexión
+            /*if (!empty($conectar)) {
+                $stmt = mysqli_prepare($conectar, "SELECT * FROM usuarios WHERE correo = ? LIMIT 1");
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, "s", $correo);
+                    mysqli_stmt_execute($stmt);
+                    $res = mysqli_stmt_get_result($stmt);
+                    if ($res && $userBD = mysqli_fetch_assoc($res)) {
+                        // Verificar contraseña con hash o texto plano
+                        if (password_verify($password, $userBD['password']) || $password === $userBD['password']) {
+                            if (($userBD['estado'] ?? 'activo') === 'inactivo') {
+                                $mensajeError = "Esta cuenta de usuario ha sido dada de baja. Contacte a Dirección General.";
+                            } else {
+                                $loginExitoso = true;
+                                $_SESSION["usuario"] = $userBD['nombre'] . ' ' . $userBD['paterno'];
+                                $_SESSION["rol"] = $userBD['rol'] ?? 'empleado';
+                                $_SESSION["correo"] = $userBD['correo'];
+                            }
+                        }
+                    }
+                }
+            }*/
+
+            // 2. Fallback de cuenta maestra institucional (por si la BD aún no tiene usuarios cargados)
+            if (!$loginExitoso && empty($mensajeError)) {
+                $usuarioValido = "usuario@issste.gob.mx";
+                $passwordValido = "12345678";
+                if ($correo === $usuarioValido && $password === $passwordValido) {
+                    $loginExitoso = true;
+                    $_SESSION["usuario"] = "Personal Médico";
+                    $_SESSION["rol"] = "director";
+                    $_SESSION["correo"] = $correo;
+                }
+            }
+
+            if ($loginExitoso) {
                 header("Location: dashboard.php");
                 exit;
-            } else {
+            } elseif (empty($mensajeError)) {
                 $mensajeError = "Correo o contraseña incorrectos.";
             }
         }
@@ -64,7 +98,7 @@
     <!-- Contenedor Principal Centrado -->
     <main class="login-wrapper">
         <div class="login-card">
-            
+
             <!-- Logotipo Institucional ISSSTE -->
             <div class="logo-container">
                 <img src="logo-issste.png" alt="Logotipo ISSSTE" class="issste-logo">
@@ -91,35 +125,33 @@
 
             <!-- Formulario de Login -->
             <form action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST" class="login-form" novalidate>
-                
+
                 <!-- Campo de Correo -->
                 <div class="form-group">
                     <label for="correo" class="form-label">Correo</label>
-                    <input 
-                        type="email" 
-                        id="correo" 
-                        name="correo" 
-                        class="form-input" 
+                    <input
+                        type="email"
+                        id="correo"
+                        name="correo"
+                        class="form-input"
                         placeholder="nombre@empresa.com"
                         value="<?= htmlspecialchars($_POST['correo'] ?? '') ?>"
                         required
-                        autocomplete="email"
-                    >
+                        autocomplete="email">
                 </div>
 
                 <!-- Campo de Contraseña con alternador de visibilidad -->
                 <div class="form-group">
                     <label for="password" class="form-label">Contraseña</label>
                     <div class="input-password-wrapper">
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            class="form-input" 
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-input"
                             placeholder="••••••••"
                             required
-                            autocomplete="current-password"
-                        >
+                            autocomplete="current-password">
                         <button type="button" id="togglePassword" class="btn-eye-toggle" aria-label="Mostrar u ocultar contraseña">
                             <!-- Ícono de Ojo -->
                             <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -146,4 +178,5 @@
     <!-- Script para Modo Oscuro y Mostrar/Ocultar Contraseña -->
     <script src="script.js"></script>
 </body>
+
 </html>

@@ -1,7 +1,81 @@
 <?php
 session_start();
+require_once "conexion.php";
 $paginaActiva = 'usuarios';
 $tituloHeader = 'Gestión y Control de Usuarios';
+
+// 1. Procesar Registro o Edición desde formulario_usuario.php (POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula_empleado'])) {
+    $cedula = trim($_POST['cedula_empleado'] ?? '');
+    $nombre = trim($_POST['nombre'] ?? '');
+    $paterno = trim($_POST['paterno'] ?? '');
+    $materno = trim($_POST['materno'] ?? '');
+    $depto = trim($_POST['depto'] ?? '');
+    $area = trim($_POST['area'] ?? '');
+    $rol = trim($_POST['rol'] ?? 'empleado');
+    $estado = trim($_POST['estado'] ?? 'activo');
+    $password = trim($_POST['password'] ?? '');
+
+    if (!empty($conectar) && !empty($cedula)) {
+        $check = mysqli_prepare($conectar, "SELECT id FROM usuarios WHERE cedula = ? OR cedula_empleado = ?");
+        if ($check) {
+            mysqli_stmt_bind_param($check, "ss", $cedula, $cedula);
+            mysqli_stmt_execute($check);
+            $resCheck = mysqli_stmt_get_result($check);
+            if ($resCheck && mysqli_num_rows($resCheck) > 0) {
+                // UPDATE
+                if (!empty($password)) {
+                    $hash = password_hash($password, PASSWORD_DEFAULT);
+                    $stmt = mysqli_prepare($conectar, "UPDATE usuarios SET nombre=?, paterno=?, materno=?, departamento=?, area=?, rol=?, estado=?, password=? WHERE cedula=? OR cedula_empleado=?");
+                    if ($stmt) {
+                        mysqli_stmt_bind_param($stmt, "ssssssssss", $nombre, $paterno, $materno, $depto, $area, $rol, $estado, $hash, $cedula, $cedula);
+                        mysqli_stmt_execute($stmt);
+                    }
+                } else {
+                    $stmt = mysqli_prepare($conectar, "UPDATE usuarios SET nombre=?, paterno=?, materno=?, departamento=?, area=?, rol=?, estado=? WHERE cedula=? OR cedula_empleado=?");
+                    if ($stmt) {
+                        mysqli_stmt_bind_param($stmt, "sssssssss", $nombre, $paterno, $materno, $depto, $area, $rol, $estado, $cedula, $cedula);
+                        mysqli_stmt_execute($stmt);
+                    }
+                }
+            } else {
+                // INSERT
+                $hash = !empty($password) ? password_hash($password, PASSWORD_DEFAULT) : password_hash('12345678', PASSWORD_DEFAULT);
+                $fechaHoy = date('d/m/Y');
+                $stmt = mysqli_prepare($conectar, "INSERT INTO usuarios (cedula, nombre, paterno, materno, departamento, area, rol, estado, password, fecha_registro) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, "ssssssssss", $cedula, $nombre, $paterno, $materno, $depto, $area, $rol, $estado, $hash, $fechaHoy);
+                    mysqli_stmt_execute($stmt);
+                }
+            }
+        }
+    }
+}
+
+// 2. Procesar Borrado de Usuario (?borrar_cedula=...)
+if (isset($_GET['borrar_cedula']) && !empty($conectar)) {
+    $cedDel = trim($_GET['borrar_cedula']);
+    $stmt = mysqli_prepare($conectar, "DELETE FROM usuarios WHERE cedula = ? OR cedula_empleado = ?");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "ss", $cedDel, $cedDel);
+        mysqli_stmt_execute($stmt);
+    }
+    header("Location: tablas_usuarios.php");
+    exit;
+}
+
+// 3. Procesar Cambio de Estado (?toggle_estado=...&nuevo=...)
+if (isset($_GET['toggle_estado']) && isset($_GET['nuevo']) && !empty($conectar)) {
+    $cedTog = trim($_GET['toggle_estado']);
+    $nuevoEst = trim($_GET['nuevo']);
+    $stmt = mysqli_prepare($conectar, "UPDATE usuarios SET estado = ? WHERE cedula = ? OR cedula_empleado = ?");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "sss", $nuevoEst, $cedTog, $cedTog);
+        mysqli_stmt_execute($stmt);
+    }
+    header("Location: tablas_usuarios.php");
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -87,6 +161,69 @@ $tituloHeader = 'Gestión y Control de Usuarios';
                             </tr>
                         </thead>
                         <tbody>
+                            <?php
+                            $hayUsuariosBD = false;
+                            if (!empty($conectar)) {
+                                $consultaUsuarios = @mysqli_query($conectar, "SELECT * FROM usuarios ORDER BY id DESC");
+                                if ($consultaUsuarios && mysqli_num_rows($consultaUsuarios) > 0) {
+                                    $hayUsuariosBD = true;
+                                    while ($u = mysqli_fetch_assoc($consultaUsuarios)) {
+                                        $ced = htmlspecialchars($u['cedula'] ?? ($u['cedula_empleado'] ?? ''));
+                                        $nom = htmlspecialchars($u['nombre']);
+                                        $pat = htmlspecialchars($u['paterno']);
+                                        $mat = htmlspecialchars($u['materno']);
+                                        $nomCompleto = trim("$nom $pat $mat");
+                                        $dep = htmlspecialchars($u['departamento'] ?? ($u['depto'] ?? ''));
+                                        $are = htmlspecialchars($u['area'] ?? '');
+                                        $rol = htmlspecialchars($u['rol'] ?? 'empleado');
+                                        $est = htmlspecialchars($u['estado'] ?? 'activo');
+                                        $fec = htmlspecialchars($u['fecha_registro'] ?? date('d/m/Y'));
+
+                                        $badgeRolClass = 'badge-rol-empleado';
+                                        $rolTexto = 'Empleado';
+                                        if ($rol === 'director') {
+                                            $badgeRolClass = 'badge-rol-director';
+                                            $rolTexto = 'Director General';
+                                        } elseif ($rol === 'admin') {
+                                            $badgeRolClass = 'badge-rol-admin';
+                                            $rolTexto = 'Administrador';
+                                        }
+
+                                        $badgeEstClass = ($est === 'activo') ? 'badge-activo' : 'badge-inactivo';
+                                        $estTexto = ($est === 'activo') ? 'Activo' : 'Inactivo';
+                                        $toggleTexto = ($est === 'activo') ? 'Baja' : 'Reactivar';
+                                        $nuevoEstado = ($est === 'activo') ? 'inactivo' : 'activo';
+                                        ?>
+                                        <tr data-rol="<?= $rol ?>" data-estado="<?= $est ?>"
+                                            data-nombre="<?= $nom ?>"
+                                            data-paterno="<?= $pat ?>"
+                                            data-materno="<?= $mat ?>"
+                                            data-cedula="<?= $ced ?>"
+                                            data-depto="<?= $dep ?>"
+                                            data-area="<?= $are ?>"
+                                            data-rol-text="<?= $rolTexto ?>"
+                                            data-estado-text="<?= $estTexto ?>"
+                                            data-fecha="<?= $fec ?>">
+                                            <td class="cell-cedula"><?= $ced ?></td>
+                                            <td><strong><?= $nomCompleto ?></strong></td>
+                                            <td><?= $dep ?></td>
+                                            <td><?= $are ?></td>
+                                            <td><span class="status-badge <?= $badgeRolClass ?>"><?= $rolTexto ?></span></td>
+                                            <td><span class="status-badge <?= $badgeEstClass ?>"><?= $estTexto ?></span></td>
+                                            <td class="cell-actions">
+                                                <button class="btn-tbl btn-tbl-view btn-view-user" type="button" title="Ver más información">Ver</button>
+                                                <a href="formulario_usuario.php?cedula=<?= urlencode($ced) ?>" class="btn-tbl btn-tbl-edit" style="text-decoration:none;" title="Editar usuario">Editar</a>
+                                                <a href="tablas_usuarios.php?toggle_estado=<?= urlencode($ced) ?>&nuevo=<?= $nuevoEstado ?>" class="btn-tbl btn-tbl-baja" style="text-decoration:none;" title="Dar de baja / reactivar"><?= $toggleTexto ?></a>
+                                                <a href="tablas_usuarios.php?borrar_cedula=<?= urlencode($ced) ?>" class="btn-tbl btn-tbl-delete" onclick="return confirm('¿Seguro que deseas eliminar este usuario de la base de datos?');" style="text-decoration:none;" title="Eliminar usuario">Borrar</a>
+                                            </td>
+                                        </tr>
+                                        <?php
+                                    }
+                                }
+                            }
+
+                            if (!$hayUsuariosBD):
+                            ?>
                             <!-- Usuario 1: Director General -->
                             <tr data-rol="director" data-estado="activo"
                                 data-nombre="Alejandro"
@@ -211,6 +348,7 @@ $tituloHeader = 'Gestión y Control de Usuarios';
                                     <button class="btn-tbl btn-tbl-delete" type="button" title="Eliminar usuario">Borrar</button>
                                 </td>
                             </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>

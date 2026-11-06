@@ -1,21 +1,91 @@
 <?php
 session_start();
+require_once "conexion.php";
 $paginaActiva = 'atencion';
 $tituloHeader = 'Registro de Atención Médica';
 
+// Función para obtener opciones relacionales
+function cargarCatalogo($conectar, $tabla, $campoId, $campoTexto, $defaults = []) {
+    $lista = [];
+    if (!empty($conectar)) {
+        $q = @mysqli_query($conectar, "SELECT * FROM `$tabla` ORDER BY `$campoTexto` ASC");
+        if ($q && mysqli_num_rows($q) > 0) {
+            while ($r = mysqli_fetch_assoc($q)) $lista[] = $r;
+        } elseif (!empty($defaults)) {
+            // Seeding preventivo si la tabla relacional aún no tiene registros
+            foreach ($defaults as $def) {
+                @mysqli_query($conectar, "INSERT INTO `$tabla` (`$campoTexto`) VALUES ('" . mysqli_real_escape_string($conectar, $def) . "')");
+            }
+            $q = @mysqli_query($conectar, "SELECT * FROM `$tabla` ORDER BY `$campoTexto` ASC");
+            if ($q) {
+                while ($r = mysqli_fetch_assoc($q)) $lista[] = $r;
+            }
+        }
+    }
+    return $lista;
+}
+
+// Cargar catálogos relacionales de MySQL
+$deptos = cargarCatalogo($conectar, 'departamentos', 'id_departamento', 'departamento', [
+    'Urgencias', 'Cirugía General', 'Medicina Interna', 'Pediatría', 'Ginecología y Obstetricia', 'Oncología', 'Traumatología'
+]);
+
+$especialidades = cargarCatalogo($conectar, 'especialidades', 'id_especialidad', 'especialidad', [
+    'Medicina Interna', 'Cardiología', 'Pediatría', 'Obstetricia', 'Traumatología', 'Oncología Médica', 'Cirugía General'
+]);
+
+$etiologias = cargarCatalogo($conectar, 'etiologia', 'id_etiologia', 'etiologia', [
+    'Infecciosa', 'Traumática', 'Quirúrgica', 'Degenerativa', 'Vascular', 'Congénita', 'Oncológica'
+]);
+
+// Cargar lista de pacientes registrados
+$pacientesList = [];
+if (!empty($conectar)) {
+    $qPac = @mysqli_query($conectar, "SELECT cedula, nombre, apellido_paterno, apellido_materno FROM pacientes ORDER BY nombre ASC");
+    if ($qPac) {
+        while ($p = mysqli_fetch_assoc($qPac)) $pacientesList[] = $p;
+    }
+}
+
+// Valores por si se viene de editar
+$idAtencion = intval($_GET['id_atencion'] ?? 0);
 $cedula = $_GET['cedula'] ?? '';
-$depto = $_GET['depto'] ?? '';
-$especialidad = $_GET['especialidad'] ?? '';
-$medico = $_GET['medico'] ?? '';
-$cama = $_GET['cama'] ?? '';
-$esEdicion = !empty($cedula);
+$idDepartamento = 0;
+$idEspecialidad = 0;
+$idEtiologia = 0;
+$fechaIngreso = date('Y-m-d');
+$fechaEgreso = '';
+$cama = '';
+$piso = '';
+$padecimiento = '';
+
+if ($idAtencion > 0 && !empty($conectar)) {
+    $stmt = mysqli_prepare($conectar, "SELECT * FROM atencion WHERE id_atencion = ? LIMIT 1");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $idAtencion);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        if ($res && $atn = mysqli_fetch_assoc($res)) {
+            $cedula = $atn['cedula'] ?? $cedula;
+            $idDepartamento = intval($atn['id_departamento'] ?? 0);
+            $idEspecialidad = intval($atn['id_especialidad'] ?? 0);
+            $idEtiologia = intval($atn['id_etiologia'] ?? 0);
+            $fechaIngreso = !empty($atn['fecha_ingreso']) ? substr($atn['fecha_ingreso'], 0, 10) : $fechaIngreso;
+            $fechaEgreso = !empty($atn['fecha_egreso']) ? substr($atn['fecha_egreso'], 0, 10) : '';
+            $cama = $atn['cama'] ?? '';
+            $piso = $atn['piso'] ?? '';
+            $padecimiento = $atn['padecimiento'] ?? '';
+        }
+    }
+}
+$esEdicion = ($idAtencion > 0);
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Atención - ISSSTE</title>
+    <title><?= $esEdicion ? 'Editar Atención' : 'Crear Atención' ?> - ISSSTE</title>
     <!-- Fuentes Google -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,7 +114,7 @@ $esEdicion = !empty($cedula);
             <!-- Cabecera Superior -->
             <?php include 'header.php'; ?>
 
-            <!-- Formulario Crear Atención (Fiel a la imagen) -->
+            <!-- Formulario Crear Atención -->
             <section class="content-body">
                 
                 <!-- Botón VOLVER rectangular gris -->
@@ -54,72 +124,88 @@ $esEdicion = !empty($cedula);
                     </a>
                 </div>
 
-                <!-- Tarjeta Blanca de Crear Atención -->
+                <!-- Tarjeta Blanca de Registro de Atención -->
                 <div class="form-register-card">
                     <div class="form-register-header">
-                        <h2 class="form-register-title"><?= $esEdicion ? 'Editar Atención' : 'Crear Atención' ?></h2>
-                        <p class="form-register-subtitle">Complete la información de atención obligatoria</p>
+                        <h2 class="form-register-title"><?= $esEdicion ? 'Editar Atención Médica' : 'Crear Atención Médica' ?></h2>
+                        <p class="form-register-subtitle">Complete la información clínica del paciente y asignación hospitalaria.</p>
                     </div>
 
                     <form action="tablas_atencion.php" method="POST" class="patient-form">
                         
-                        <!-- Fila 1: Cédula y departamento -->
+                        <?php if ($esEdicion): ?>
+                            <input type="hidden" name="id_atencion" value="<?= $idAtencion ?>">
+                        <?php endif; ?>
+
+                        <!-- Fila 1: Paciente (Cédula) y Departamento -->
                         <div class="form-row-2">
                             <div class="form-field">
-                                <label for="atnCedula" class="form-label">Cédula</label>
-                                <input 
-                                    type="text" 
-                                    id="atnCedula" 
-                                    name="cedula" 
-                                    class="form-control" 
-                                    placeholder="Ingrese la cédula" 
-                                    value="<?= htmlspecialchars($cedula) ?>"
-                                    required
-                                >
+                                <label for="atnCedula" class="form-label">Paciente / Cédula</label>
+                                <div class="select-with-icon">
+                                    <select id="atnCedula" name="cedula" class="form-control" required>
+                                        <option value="" disabled <?= empty($cedula) ? 'selected' : '' ?>>Seleccione un paciente registrado</option>
+                                        <?php if (!empty($pacientesList)): ?>
+                                            <?php foreach ($pacientesList as $pac): ?>
+                                                <?php $sel = ($pac['cedula'] === $cedula) ? 'selected' : ''; ?>
+                                                <option value="<?= htmlspecialchars($pac['cedula']) ?>" <?= $sel ?>>
+                                                    <?= htmlspecialchars($pac['nombre'] . ' ' . ($pac['apellido_paterno'] ?? '') . ' ' . ($pac['apellido_materno'] ?? '')) ?> (Céd. <?= htmlspecialchars($pac['cedula']) ?>)
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <option value="<?= htmlspecialchars($cedula) ?>" selected><?= !empty($cedula) ? htmlspecialchars($cedula) : 'No hay pacientes aún' ?></option>
+                                        <?php endif; ?>
+                                    </select>
+                                </div>
                             </div>
                             <div class="form-field">
-                                <label for="atnDepto" class="form-label">departamento</label>
-                                <input 
-                                    type="text" 
-                                    id="atnDepto" 
-                                    name="departamento" 
-                                    class="form-control" 
-                                    placeholder="Ingrese el departamento" 
-                                    value="<?= htmlspecialchars($depto) ?>"
-                                    required
-                                >
+                                <label for="atnDepto" class="form-label">Departamento</label>
+                                <div class="select-with-icon">
+                                    <select id="atnDepto" name="id_departamento" class="form-control" required>
+                                        <option value="" disabled <?= ($idDepartamento === 0) ? 'selected' : '' ?>>Seleccione un departamento</option>
+                                        <?php foreach ($deptos as $d): ?>
+                                            <?php $sel = (intval($d['id_departamento']) === $idDepartamento) ? 'selected' : ''; ?>
+                                            <option value="<?= $d['id_departamento'] ?>" <?= $sel ?>>
+                                                <?= htmlspecialchars($d['departamento']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Fila 2: Especialidad y Medico -->
+                        <!-- Fila 2: Especialidad y Etiología -->
                         <div class="form-row-2">
                             <div class="form-field">
                                 <label for="atnEspecialidad" class="form-label">Especialidad</label>
-                                <input 
-                                    type="text" 
-                                    id="atnEspecialidad" 
-                                    name="especialidad" 
-                                    class="form-control" 
-                                    placeholder="Ingresa la especialidad" 
-                                    value="<?= htmlspecialchars($especialidad) ?>"
-                                    required
-                                >
+                                <div class="select-with-icon">
+                                    <select id="atnEspecialidad" name="id_especialidad" class="form-control" required>
+                                        <option value="" disabled <?= ($idEspecialidad === 0) ? 'selected' : '' ?>>Seleccione una especialidad</option>
+                                        <?php foreach ($especialidades as $e): ?>
+                                            <?php $sel = (intval($e['id_especialidad']) === $idEspecialidad) ? 'selected' : ''; ?>
+                                            <option value="<?= $e['id_especialidad'] ?>" <?= $sel ?>>
+                                                <?= htmlspecialchars($e['especialidad']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                             </div>
                             <div class="form-field">
-                                <label for="atnMedico" class="form-label">Medico</label>
-                                <input 
-                                    type="text" 
-                                    id="atnMedico" 
-                                    name="medico" 
-                                    class="form-control" 
-                                    placeholder="Ingrese el medico tratante" 
-                                    value="<?= htmlspecialchars($medico) ?>"
-                                    required
-                                >
+                                <label for="atnEtiologia" class="form-label">Etiología</label>
+                                <div class="select-with-icon">
+                                    <select id="atnEtiologia" name="id_etiologia" class="form-control" required>
+                                        <option value="" disabled <?= ($idEtiologia === 0) ? 'selected' : '' ?>>Seleccione una etiología</option>
+                                        <?php foreach ($etiologias as $et): ?>
+                                            <?php $sel = (intval($et['id_etiologia']) === $idEtiologia) ? 'selected' : ''; ?>
+                                            <option value="<?= $et['id_etiologia'] ?>" <?= $sel ?>>
+                                                <?= htmlspecialchars($et['etiologia']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Fila 3: Fecha de Ingreso y Fecha de egreso -->
+                        <!-- Fila 3: Fecha de Ingreso y Fecha de Egreso -->
                         <div class="form-row-2">
                             <div class="form-field">
                                 <label for="atnIngreso" class="form-label">Fecha de Ingreso</label>
@@ -129,19 +215,20 @@ $esEdicion = !empty($cedula);
                                         id="atnIngreso" 
                                         name="fecha_ingreso" 
                                         class="form-control" 
-                                        placeholder="DD / MM / AAAA"
+                                        value="<?= htmlspecialchars($fechaIngreso) ?>"
+                                        required
                                     >
                                 </div>
                             </div>
                             <div class="form-field">
-                                <label for="atnEgreso" class="form-label">Fecha de egreso</label>
+                                <label for="atnEgreso" class="form-label">Fecha de Egreso (Opcional)</label>
                                 <div class="input-with-icon">
                                     <input 
                                         type="date" 
                                         id="atnEgreso" 
                                         name="fecha_egreso" 
                                         class="form-control" 
-                                        placeholder="DD / MM / AAAA"
+                                        value="<?= htmlspecialchars($fechaEgreso) ?>"
                                     >
                                 </div>
                             </div>
@@ -149,52 +236,45 @@ $esEdicion = !empty($cedula);
 
                         <!-- Fila 4: Padecimiento (Textarea) -->
                         <div class="form-field-full">
-                            <label for="atnPadecimiento" class="form-label">Padecimiento</label>
+                            <label for="atnPadecimiento" class="form-label">Padecimiento / Diagnóstico</label>
                             <textarea 
                                 id="atnPadecimiento" 
                                 name="padecimiento" 
                                 class="form-control form-textarea" 
-                                placeholder="Describa el padecimietno" 
+                                placeholder="Describa el diagnóstico o motivo de ingreso" 
                                 rows="3"
-                            ></textarea>
+                            ><?= htmlspecialchars($padecimiento) ?></textarea>
                         </div>
 
-                        <!-- Fila 5: cama, Piso, etiologia y Botón Guardar -->
-                        <div class="form-row-atencion-bottom">
-                            <div class="form-field">
-                                <label for="atnCama" class="form-label">cama</label>
-                                <input 
-                                    type="text" 
-                                    id="atnCama" 
-                                    name="cama" 
-                                    class="form-control" 
-                                    placeholder="Ingrese la cama" 
-                                    value="<?= htmlspecialchars($cama) ?>"
-                                >
+                        <!-- Fila 5: Cama, Piso y Botón Guardar -->
+                        <div class="form-row-2" style="align-items: flex-end;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-field">
+                                    <label for="atnCama" class="form-label">Cama</label>
+                                    <input 
+                                        type="number" 
+                                        id="atnCama" 
+                                        name="cama" 
+                                        class="form-control" 
+                                        placeholder="Ej. 205" 
+                                        value="<?= htmlspecialchars($cama) ?>"
+                                    >
+                                </div>
+                                <div class="form-field">
+                                    <label for="atnPiso" class="form-label">Piso</label>
+                                    <input 
+                                        type="number" 
+                                        id="atnPiso" 
+                                        name="piso" 
+                                        class="form-control" 
+                                        placeholder="Ej. 2"
+                                        value="<?= htmlspecialchars($piso) ?>"
+                                    >
+                                </div>
                             </div>
-                            <div class="form-field">
-                                <label for="atnPiso" class="form-label">Piso</label>
-                                <input 
-                                    type="text" 
-                                    id="atnPiso" 
-                                    name="piso" 
-                                    class="form-control" 
-                                    placeholder="Ingrese piso"
-                                >
-                            </div>
-                            <div class="form-field">
-                                <label for="atnEtiologia" class="form-label">etiologia</label>
-                                <input 
-                                    type="text" 
-                                    id="atnEtiologia" 
-                                    name="etiologia" 
-                                    class="form-control" 
-                                    placeholder="Ingrese piso"
-                                >
-                            </div>
-                            <div class="form-actions-btn">
+                            <div class="form-actions-btn" style="display: flex; justify-content: flex-end;">
                                 <button type="submit" class="btn-guardar">
-                                    Guardar
+                                    <?= $esEdicion ? 'Actualizar Atención' : 'Guardar Atención' ?>
                                 </button>
                             </div>
                         </div>

@@ -1,7 +1,78 @@
 <?php
 session_start();
+require_once "conexion.php";
 $paginaActiva = 'paciente';
 $tituloHeader = 'Control y Registro de Pacientes';
+
+$mensajeExito = '';
+$mensajeError = '';
+
+// 1. Procesar Registro o Edición desde formulario_paciente.php (POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
+    $cedula = trim($_POST['cedula'] ?? '');
+    $cedulaOriginal = trim($_POST['cedula_original'] ?? '');
+    $nombre = trim($_POST['nombre'] ?? '');
+    $paterno = trim($_POST['apellido_paterno'] ?? ($_POST['paterno'] ?? ''));
+    $materno = trim($_POST['apellido_materno'] ?? ($_POST['materno'] ?? ''));
+    $nacimiento = trim($_POST['fecha_nacimiento'] ?? ($_POST['nacimiento'] ?? ''));
+    $genero = trim($_POST['genero'] ?? '');
+    $alergias = trim($_POST['alergias'] ?? '');
+    $cirugia = trim($_POST['fecha_cirugia'] ?? ($_POST['cirugia'] ?? ''));
+
+    // Manejo de fechas NULL si vienen vacías para evitar errores en MySQL
+    $nacimientoVal = !empty($nacimiento) ? $nacimiento : null;
+    $cirugiaVal = !empty($cirugia) ? $cirugia : null;
+
+    if (!empty($conectar) && !empty($cedula)) {
+        $cedulaBuscar = !empty($cedulaOriginal) ? $cedulaOriginal : $cedula;
+
+        // Comprobar si el paciente ya existe por su cédula
+        $check = mysqli_prepare($conectar, "SELECT cedula FROM pacientes WHERE cedula = ?");
+        if ($check) {
+            mysqli_stmt_bind_param($check, "s", $cedulaBuscar);
+            mysqli_stmt_execute($check);
+            $resCheck = mysqli_stmt_get_result($check);
+
+            if ($resCheck && mysqli_num_rows($resCheck) > 0) {
+                // UPDATE (actualizar paciente existente en la base de datos)
+                $stmt = mysqli_prepare($conectar, "UPDATE pacientes SET cedula=?, nombre=?, apellido_paterno=?, apellido_materno=?, fecha_nacimiento=?, genero=?, alergias=?, fecha_cirugia=? WHERE cedula=?");
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, "sssssssss", $cedula, $nombre, $paterno, $materno, $nacimientoVal, $genero, $alergias, $cirugiaVal, $cedulaBuscar);
+                    if (mysqli_stmt_execute($stmt)) {
+                        $mensajeExito = "Paciente con cédula {$cedula} actualizado exitosamente.";
+                    } else {
+                        $mensajeError = "Error al actualizar: " . mysqli_error($conectar);
+                    }
+                }
+            } else {
+                // INSERT (registrar nuevo paciente en la base de datos)
+                $stmt = mysqli_prepare($conectar, "INSERT INTO pacientes (cedula, nombre, apellido_paterno, apellido_materno, fecha_nacimiento, genero, alergias, fecha_cirugia) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, "ssssssss", $cedula, $nombre, $paterno, $materno, $nacimientoVal, $genero, $alergias, $cirugiaVal);
+                    if (mysqli_stmt_execute($stmt)) {
+                        $mensajeExito = "Paciente con cédula {$cedula} registrado exitosamente.";
+                    } else {
+                        $mensajeError = "Error al registrar: " . mysqli_error($conectar);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 2. Procesar Eliminación de Paciente (?eliminar=...)
+if (isset($_GET['eliminar']) && !empty($conectar)) {
+    $cedulaDel = trim($_GET['eliminar']);
+    $stmt = mysqli_prepare($conectar, "DELETE FROM pacientes WHERE cedula = ?");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "s", $cedulaDel);
+        if (mysqli_stmt_execute($stmt)) {
+            $mensajeExito = "Paciente eliminado correctamente de la base de datos.";
+        } else {
+            $mensajeError = "Error al eliminar paciente: " . mysqli_error($conectar);
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -42,6 +113,19 @@ $tituloHeader = 'Control y Registro de Pacientes';
             <!-- Contenido de Tabla de Pacientes -->
             <section class="content-body">
 
+                <!-- Alertas de éxito o error -->
+                <?php if (!empty($mensajeExito)): ?>
+                    <div style="background-color: rgba(34, 197, 94, 0.15); border: 1.5px solid #22c55e; color: #166534; padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                        <span>✓</span> <?= htmlspecialchars($mensajeExito) ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (!empty($mensajeError)): ?>
+                    <div style="background-color: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #991b1b; padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                        <span>⚠</span> <?= htmlspecialchars($mensajeError) ?>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Barra de herramientas: REGISTRAR y BUSCAR -->
                 <div class="patients-toolbar">
                     <a href="formulario_paciente.php" class="btn-registrar" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
@@ -78,66 +162,57 @@ $tituloHeader = 'Control y Registro de Pacientes';
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td class="cell-cedula">12-4567-8910</td>
-                                <td>María</td>
-                                <td>Hernández</td>
-                                <td>López</td>
-                                <td>Femenino</td>
-                                <td class="cell-actions">
-                                    <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
-                                    <a href="formulario_paciente.php?cedula=12-4567-8910&nombre=María&paterno=Hernández&materno=López&genero=Femenino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
-                                    <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="cell-cedula">14-2034-5567</td>
-                                <td>Carlos</td>
-                                <td>Ramírez</td>
-                                <td>García</td>
-                                <td>Masculino</td>
-                                <td class="cell-actions">
-                                    <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
-                                    <a href="formulario_paciente.php?cedula=14-2034-5567&nombre=Carlos&paterno=Ramírez&materno=García&genero=Masculino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
-                                    <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="cell-cedula">11-9876-5432</td>
-                                <td>Lucía</td>
-                                <td>Torres</td>
-                                <td>Martínez</td>
-                                <td>Femenino</td>
-                                <td class="cell-actions">
-                                    <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
-                                    <a href="formulario_paciente.php?cedula=11-9876-5432&nombre=Lucía&paterno=Torres&materno=Martínez&genero=Femenino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
-                                    <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="cell-cedula">13-7789-1122</td>
-                                <td>Juan</td>
-                                <td>Sánchez</td>
-                                <td>Díaz</td>
-                                <td>Masculino</td>
-                                <td class="cell-actions">
-                                    <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
-                                    <a href="formulario_paciente.php?cedula=13-7789-1122&nombre=Juan&paterno=Sánchez&materno=Díaz&genero=Masculino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
-                                    <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="cell-cedula">15-3321-9988</td>
-                                <td>Sofía</td>
-                                <td>Gómez</td>
-                                <td>Ruiz</td>
-                                <td>Femenino</td>
-                                <td class="cell-actions">
-                                    <button class="btn-tbl btn-tbl-view" type="button">Ver</button>
-                                    <a href="formulario_paciente.php?cedula=15-3321-9988&nombre=Sofía&paterno=Gómez&materno=Ruiz&genero=Femenino" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
-                                    <button class="btn-tbl btn-tbl-delete" type="button">Eliminar</button>
-                                </td>
-                            </tr>
+                            <?php
+                            $hayPacientesBD = false;
+
+                            if (!empty($conectar)) {
+                                $consultaPacientes = @mysqli_query($conectar, "SELECT * FROM pacientes ORDER BY cedula ASC");
+                                if ($consultaPacientes && mysqli_num_rows($consultaPacientes) > 0) {
+                                    $hayPacientesBD = true;
+                                    while ($p = mysqli_fetch_assoc($consultaPacientes)) {
+                                        $ced = htmlspecialchars($p['cedula']);
+                                        $nom = htmlspecialchars($p['nombre']);
+                                        $pat = htmlspecialchars($p['apellido_paterno'] ?? ($p['paterno'] ?? ''));
+                                        $mat = htmlspecialchars($p['apellido_materno'] ?? ($p['materno'] ?? ''));
+                                        $gen = htmlspecialchars($p['genero']);
+                                        $nac = htmlspecialchars(!empty($p['fecha_nacimiento']) ? $p['fecha_nacimiento'] : 'No registrada');
+                                        $ale = htmlspecialchars(!empty($p['alergias']) ? $p['alergias'] : 'Ninguna');
+                                        $cir = htmlspecialchars(!empty($p['fecha_cirugia']) ? substr($p['fecha_cirugia'], 0, 10) : 'No programada');
+                            ?>
+                                        <tr data-cedula="<?= $ced ?>"
+                                            data-nombre="<?= $nom ?>"
+                                            data-paterno="<?= $pat ?>"
+                                            data-materno="<?= $mat ?>"
+                                            data-genero="<?= $gen ?>"
+                                            data-nacimiento="<?= $nac ?>"
+                                            data-alergias="<?= $ale ?>"
+                                            data-cirugia="<?= $cir ?>">
+                                            <td class="cell-cedula"><?= $ced ?></td>
+                                            <td><strong><?= $nom ?></strong></td>
+                                            <td><?= $pat ?></td>
+                                            <td><?= $mat ?></td>
+                                            <td><?= $gen ?></td>
+                                            <td class="cell-actions">
+                                                <button class="btn-tbl btn-tbl-view btn-view-patient" type="button" title="Ver expediente">Ver</button>
+                                                <a href="formulario_paciente.php?cedula=<?= urlencode($p['cedula']) ?>" class="btn-tbl btn-tbl-edit" style="text-decoration:none;" title="Editar paciente">Editar</a>
+                                                <a href="tablas_pacientes.php?eliminar=<?= urlencode($p['cedula']) ?>" class="btn-tbl btn-tbl-delete" onclick="return confirm('¿Seguro que deseas eliminar al paciente <?= htmlspecialchars($nom . ' ' . $pat) ?> con cédula <?= $ced ?>?');" style="text-decoration:none; display:inline-flex; align-items:center;" title="Eliminar paciente">Eliminar</a>
+                                            </td>
+                                        </tr>
+                            <?php
+                                    }
+                                }
+                            }
+
+                            // Estado vacío cuando no hay pacientes registrados en la base de datos
+                            if (!$hayPacientesBD):
+                            ?>
+                                <tr>
+                                    <td colspan="6" style="text-align:center; padding: 48px 20px; color: var(--text-secondary);">
+                                        <div style="font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">No hay pacientes registrados en la base de datos</div>
+                                        <p style="font-size: 13.5px;">Haga clic en el botón <strong>REGISTRAR</strong> para agregar al primer paciente a la base de datos.</p>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -147,8 +222,119 @@ $tituloHeader = 'Control y Registro de Pacientes';
 
     </div>
 
+    <!-- Modal Detallado: Expediente del Paciente (Ver Más Información) -->
+    <div id="modalDetallePaciente" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 580px;">
+            <div class="modal-header">
+                <h3>Expediente del Paciente</h3>
+                <button type="button" class="modal-close" id="btnClosePatientModal">&times;</button>
+            </div>
+            
+            <!-- Tarjeta Cabecera del Paciente -->
+            <div class="user-detail-header-card">
+                <div class="user-detail-avatar" id="patientAvatar">P</div>
+                <div class="user-detail-title">
+                    <h4 id="patientNombreCompleto">Nombre del Paciente</h4>
+                    <p id="patientCedulaBadge">Cédula: --</p>
+                </div>
+            </div>
+
+            <!-- Grilla de Información Completa de la tabla pacientes -->
+            <div class="user-detail-grid">
+                <div class="user-detail-item">
+                    <div class="user-detail-label">Nombre(s)</div>
+                    <div class="user-detail-val" id="patientNombre">--</div>
+                </div>
+                <div class="user-detail-item">
+                    <div class="user-detail-label">Apellido Paterno</div>
+                    <div class="user-detail-val" id="patientPaterno">--</div>
+                </div>
+                <div class="user-detail-item">
+                    <div class="user-detail-label">Apellido Materno</div>
+                    <div class="user-detail-val" id="patientMaterno">--</div>
+                </div>
+                <div class="user-detail-item">
+                    <div class="user-detail-label">Género</div>
+                    <div class="user-detail-val" id="patientGenero">--</div>
+                </div>
+                <div class="user-detail-item">
+                    <div class="user-detail-label">Fecha de Nacimiento</div>
+                    <div class="user-detail-val" id="patientNacimiento">--</div>
+                </div>
+                <div class="user-detail-item">
+                    <div class="user-detail-label">Fecha de Cirugía</div>
+                    <div class="user-detail-val" id="patientCirugia">--</div>
+                </div>
+                <div class="user-detail-item user-detail-full">
+                    <div class="user-detail-label">Alergias Conocidas</div>
+                    <div class="user-detail-val" id="patientAlergias" style="font-weight: 500; font-size: 13.5px;">--</div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <a href="#" id="btnEditarDesdeModal" class="btn-tbl btn-tbl-edit" style="text-decoration:none; padding: 10px 22px; font-size: 13.5px; border-radius: 8px;">Editar Paciente</a>
+                <button type="button" class="btn-cancel" id="btnCerrarDetallePaciente">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="dashboard.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('modalDetallePaciente');
+            const btnClose = document.getElementById('btnClosePatientModal');
+            const btnCerrar = document.getElementById('btnCerrarDetallePaciente');
+            const btnEditarModal = document.getElementById('btnEditarDesdeModal');
+
+            function cerrarModal() {
+                if (modal) modal.classList.remove('open');
+            }
+
+            if (btnClose) btnClose.addEventListener('click', cerrarModal);
+            if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) cerrarModal();
+                });
+            }
+
+            // Abrir modal con "Ver expediente completo del paciente"
+            document.querySelectorAll('.btn-view-patient').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tr = btn.closest('tr');
+                    if (!tr) return;
+
+                    const cedula = tr.dataset.cedula || '';
+                    const nombre = tr.dataset.nombre || '';
+                    const paterno = tr.dataset.paterno || '';
+                    const materno = tr.dataset.materno || '';
+                    const genero = tr.dataset.genero || '';
+                    const nacimiento = tr.dataset.nacimiento || 'No registrada';
+                    const alergias = tr.dataset.alergias || 'Ninguna';
+                    const cirugia = tr.dataset.cirugia || 'No programada';
+
+                    document.getElementById('patientAvatar').textContent = nombre.charAt(0).toUpperCase() || 'P';
+                    document.getElementById('patientNombreCompleto').textContent = `${nombre} ${paterno} ${materno}`.trim();
+                    document.getElementById('patientCedulaBadge').textContent = `Cédula: ${cedula}`;
+
+                    document.getElementById('patientNombre').textContent = nombre;
+                    document.getElementById('patientPaterno').textContent = paterno;
+                    document.getElementById('patientMaterno').textContent = materno;
+                    document.getElementById('patientGenero').textContent = genero;
+                    document.getElementById('patientNacimiento').textContent = nacimiento;
+                    document.getElementById('patientCirugia').textContent = cirugia;
+                    document.getElementById('patientAlergias').textContent = alergias;
+
+                    if (btnEditarModal) {
+                        btnEditarModal.href = `formulario_paciente.php?cedula=${encodeURIComponent(cedula)}`;
+                    }
+
+                    modal.classList.add('open');
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

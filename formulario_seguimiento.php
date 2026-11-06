@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once "conexion.php";
 $paginaActiva = 'seguimiento';
 $tituloHeader = 'Registro de Seguimiento Clínico';
 

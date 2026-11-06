@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once "conexion.php";
 $paginaActiva = 'usuarios';
 $tituloHeader = 'Registro de Usuarios';
 
@@ -12,6 +13,25 @@ $depto = $_GET['depto'] ?? '';
 $area = $_GET['area'] ?? '';
 $rol = $_GET['rol'] ?? 'empleado';
 $estado = $_GET['estado'] ?? 'activo';
+
+if (!empty($cedula) && !empty($conectar)) {
+    $stmt = mysqli_prepare($conectar, "SELECT * FROM usuarios WHERE cedula = ? OR cedula_empleado = ? LIMIT 1");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "ss", $cedula, $cedula);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        if ($res && $u = mysqli_fetch_assoc($res)) {
+            $nombre = $u['nombre'] ?? $nombre;
+            $paterno = $u['paterno'] ?? $paterno;
+            $materno = $u['materno'] ?? $materno;
+            $depto = $u['departamento'] ?? ($u['depto'] ?? $depto);
+            $area = $u['area'] ?? $area;
+            $rol = $u['rol'] ?? $rol;
+            $estado = $u['estado'] ?? $estado;
+        }
+    }
+}
+
 $esEdicion = !empty($cedula);
 ?>
 <!DOCTYPE html>

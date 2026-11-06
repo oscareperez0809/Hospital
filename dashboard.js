@@ -74,7 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!row) return;
 
             // Botón VER (para tablas genéricas sin modal interactivo propio)
-            if (btn.classList.contains('btn-tbl-view') && !btn.classList.contains('btn-view-user')) {
+           if (
+    btn.classList.contains('btn-tbl-view') &&
+    !btn.classList.contains('btn-view-user') &&
+    !btn.classList.contains('btn-view-patient') &&
+    !btn.classList.contains('btn-view-atn')
+) {
                 const cells = Array.from(row.querySelectorAll('td'));
                 const headers = Array.from(document.querySelectorAll('#patientsTable thead th'));
                 let info = "📋 Información del Registro:\n\n";
