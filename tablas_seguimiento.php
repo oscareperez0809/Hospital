@@ -62,8 +62,6 @@ if (isset($_GET['eliminar_id']) && !empty($conectar)) {
                             REGISTRAR
                         </a>
                         <button type="button" class="btn-chip active" data-filter="todos">Todos</button>
-                        <button type="button" class="btn-chip" data-filter="piso-1">Piso 1</button>
-                        <button type="button" class="btn-chip" data-filter="piso-2">Piso 2</button>
                     </div>
 
                     <!-- Cápsula BUSCAR por nombre de paciente o cama -->
@@ -100,14 +98,16 @@ if (isset($_GET['eliminar_id']) && !empty($conectar)) {
                             <?php
                             $haySeguimientosBD = false;
                             if (!empty($conectar)) {
-                                // Consulta inteligente uniendo seguimiento con atenciones y pacientes para obtener datos reales
+                                // Consulta inteligente uniendo seguimiento, atenciones, pacientes y el catálogo de dolor
                                 $sqlSeg = "SELECT s.*, 
-                                                  p.nombre AS pac_nombre, p.apellido_paterno AS pac_paterno, p.apellido_materno AS pac_materno,
-                                                  a.cama AS atn_cama, a.piso AS atn_piso
-                                           FROM seguimiento s
-                                           LEFT JOIN atencion a ON s.id_atencion = a.id_atencion
-                                           LEFT JOIN pacientes p ON a.cedula = p.cedula
-                                           ORDER BY s.id_seguimiento DESC";
+                                                 p.nombre AS pac_nombre, p.apellido_paterno AS pac_paterno, p.apellido_materno AS pac_materno,
+                                                 a.cama AS atn_cama, a.piso AS atn_piso,
+                                                 d.Dolor_Eva AS desc_dolor
+                                          FROM seguimiento s
+                                          LEFT JOIN atencion a ON s.id_atencion = a.id_atencion
+                                          LEFT JOIN pacientes p ON a.cedula = p.cedula
+                                          LEFT JOIN dolor_eva d ON s.id_dolor = d.id_dolor
+                                          ORDER BY s.id_seguimiento DESC";
 
                                 $consultaSeg = @mysqli_query($conectar, $sqlSeg);
 
@@ -117,7 +117,7 @@ if (isset($_GET['eliminar_id']) && !empty($conectar)) {
                                         $idVal = $s['id_seguimiento'] ?? 0;
                                         $idSeg = "SEG-" . str_pad($idVal, 3, '0', STR_PAD_LEFT);
 
-                                        // Obtener nombre del paciente (ya sea por relación o respaldado por texto plano)
+                                        // Obtener nombre del paciente
                                         $nomPac = trim(($s['pac_nombre'] ?? '') . ' ' . ($s['pac_paterno'] ?? '') . ' ' . ($s['pac_materno'] ?? ''));
                                         if (empty($nomPac)) {
                                             $nomPac = $s['paciente'] ?? 'Paciente general';
@@ -128,7 +128,7 @@ if (isset($_GET['eliminar_id']) && !empty($conectar)) {
                                         $piso = !empty($s['atn_piso']) ? "Piso " . $s['atn_piso'] : 'Hospitalización';
 
                                         $fec = htmlspecialchars($s['fecha'] ?? '');
-                                        $dol = htmlspecialchars($s['dolor_eva'] ?? ($s['dolor'] ?? '--'));
+                                        $dol = htmlspecialchars($s['desc_dolor'] ?? '--');
                             ?>
                                         <tr data-piso="<?= !empty($s['atn_piso']) ? $s['atn_piso'] : '' ?>">
                                             <td class="cell-cedula"><?= $idSeg ?></td>

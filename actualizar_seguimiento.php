@@ -8,30 +8,32 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $idSeguimiento = intval($_POST['id_seguimiento'] ?? 0);
-$paciente = trim($_POST['paciente'] ?? '');
-$cama = trim($_POST['cama'] ?? '');
-$fecha = trim($_POST['fecha'] ?? '');
-$dolor = trim($_POST['dolor'] ?? '');
-$bordes = trim($_POST['bordes'] ?? '');
-$exudados = trim($_POST['exudados'] ?? '');
-$eritema = trim($_POST['eritema'] ?? '');
+$idAtencion = intval($_POST['id_atencion'] ?? 0);
+$fecha = trim($_POST['fecha'] ?? date('Y-m-d H:i:s'));
 
-if (empty($conectar) || $idSeguimiento <= 0 || empty($paciente)) {
+// Manejar conversión segura a NULL para llaves foráneas opcionales
+$idBorde = !empty($_POST['id_borde']) ? intval($_POST['id_borde']) : null;
+$idExudado = !empty($_POST['id_exudado']) ? intval($_POST['id_exudado']) : null;
+$idDolor = !empty($_POST['id_dolor']) ? intval($_POST['id_dolor']) : null;
+$idEritema = !empty($_POST['id_eritema']) ? intval($_POST['id_eritema']) : null;
+
+$observaciones = trim($_POST['observaciones'] ?? '');
+
+if (empty($conectar) || $idSeguimiento <= 0 || $idAtencion <= 0) {
   header("Location: tablas_seguimiento.php?error=1");
   exit();
 }
 
-// Actualizar seguimiento clínico
 $stmt = mysqli_prepare(
   $conectar,
   "UPDATE seguimiento SET 
-        paciente = ?, 
-        cama = ?, 
+        id_atencion = ?, 
         fecha = ?, 
-        dolor_eva = ?, 
-        bordes = ?, 
-        exudados = ?, 
-        eritema = ? 
+        id_borde = ?, 
+        id_exudado = ?, 
+        id_dolor = ?, 
+        id_eritema = ?, 
+        observaciones = ? 
     WHERE id_seguimiento = ?"
 );
 
@@ -42,14 +44,14 @@ if (!$stmt) {
 
 mysqli_stmt_bind_param(
   $stmt,
-  "sssssssi",
-  $paciente,
-  $cama,
+  "isiiiisi",
+  $idAtencion,
   $fecha,
-  $dolor,
-  $bordes,
-  $exudados,
-  $eritema,
+  $idBorde,
+  $idExudado,
+  $idDolor,
+  $idEritema,
+  $observaciones,
   $idSeguimiento
 );
 

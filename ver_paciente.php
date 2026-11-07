@@ -28,11 +28,12 @@ $p = mysqli_fetch_assoc($resultado);
 
 $nombreCompleto = trim(
     $p['nombre'] . ' ' .
-    $p['apellido_paterno'] . ' ' .
-    $p['apellido_materno']
+        $p['apellido_paterno'] . ' ' .
+        $p['apellido_materno']
 );
 
-function mostrarDato($valor) {
+function mostrarDato($valor)
+{
     return !empty($valor) ? htmlspecialchars($valor) : 'No registrado';
 }
 ?>
@@ -59,99 +60,100 @@ function mostrarDato($valor) {
 
 <body>
 
-<div class="dashboard-container">
+    <div class="dashboard-container">
 
-    <?php include 'sidebar.php'; ?>
+        <?php include 'sidebar.php'; ?>
 
-    <main class="main-wrapper">
+        <main class="main-wrapper">
 
-        <?php include 'header.php'; ?>
+            <?php include 'header.php'; ?>
 
-        <section class="content-body">
+            <section class="content-body">
 
-            <div class="modal-card" style="max-width: 580px; margin: 0 auto;">
+                <div class="modal-card" style="max-width: 580px; margin: 0 auto;">
 
-                <div class="modal-header">
-                    <h3>Expediente del Paciente</h3>
-                </div>
-
-                <div class="user-detail-header-card">
-
-                    <div class="user-detail-avatar">
-                        <?= htmlspecialchars(strtoupper(substr($p['nombre'], 0, 1))) ?>
+                    <div class="modal-header">
+                        <h3>Expediente del Paciente</h3>
                     </div>
 
-                    <div class="user-detail-title">
-                        <h4><?= htmlspecialchars($nombreCompleto) ?></h4>
-                        <p>Cédula: <?= htmlspecialchars($p['cedula']) ?></p>
-                    </div>
+                    <div class="user-detail-header-card">
 
-                </div>
-
-                <div class="user-detail-grid">
-
-                    <div class="user-detail-item">
-                        <div class="user-detail-label">Nombre(s)</div>
-                        <div class="user-detail-val"><?= mostrarDato($p['nombre']) ?></div>
-                    </div>
-
-                    <div class="user-detail-item">
-                        <div class="user-detail-label">Apellido Paterno</div>
-                        <div class="user-detail-val"><?= mostrarDato($p['apellido_paterno']) ?></div>
-                    </div>
-
-                    <div class="user-detail-item">
-                        <div class="user-detail-label">Apellido Materno</div>
-                        <div class="user-detail-val"><?= mostrarDato($p['apellido_materno']) ?></div>
-                    </div>
-
-                    <div class="user-detail-item">
-                        <div class="user-detail-label">Género</div>
-                        <div class="user-detail-val"><?= mostrarDato($p['genero']) ?></div>
-                    </div>
-
-                    <div class="user-detail-item">
-                        <div class="user-detail-label">Fecha de Nacimiento</div>
-                        <div class="user-detail-val"><?= mostrarDato($p['fecha_nacimiento']) ?></div>
-                    </div>
-
-                    <div class="user-detail-item">
-                        <div class="user-detail-label">Fecha de Cirugía</div>
-                        <div class="user-detail-val"><?= mostrarDato($p['fecha_cirugia']) ?></div>
-                    </div>
-
-                    <div class="user-detail-item user-detail-full">
-                        <div class="user-detail-label">Alergias Conocidas</div>
-                        <div class="user-detail-val">
-                            <?= mostrarDato($p['alergias']) ?>
+                        <div class="user-detail-avatar">
+                            <?= htmlspecialchars(strtoupper(substr($p['nombre'], 0, 1))) ?>
                         </div>
+
+                        <div class="user-detail-title">
+                            <h4><?= htmlspecialchars($nombreCompleto) ?></h4>
+                            <p>Cédula: <?= htmlspecialchars($p['cedula']) ?></p>
+                        </div>
+
+                    </div>
+
+                    <div class="user-detail-grid">
+
+                        <div class="user-detail-item">
+                            <div class="user-detail-label">Nombre(s)</div>
+                            <div class="user-detail-val"><?= mostrarDato($p['nombre']) ?></div>
+                        </div>
+
+                        <div class="user-detail-item">
+                            <div class="user-detail-label">Apellido Paterno</div>
+                            <div class="user-detail-val"><?= mostrarDato($p['apellido_paterno']) ?></div>
+                        </div>
+
+                        <div class="user-detail-item">
+                            <div class="user-detail-label">Apellido Materno</div>
+                            <div class="user-detail-val"><?= mostrarDato($p['apellido_materno']) ?></div>
+                        </div>
+
+                        <div class="user-detail-item">
+                            <div class="user-detail-label">Género</div>
+                            <div class="user-detail-val"><?= mostrarDato($p['genero']) ?></div>
+                        </div>
+
+                        <div class="user-detail-item">
+                            <div class="user-detail-label">Fecha de Nacimiento</div>
+                            <div class="user-detail-val"><?= mostrarDato($p['fecha_nacimiento']) ?></div>
+                        </div>
+
+                        <div class="user-detail-item">
+                            <div class="user-detail-label">Fecha de Cirugía</div>
+                            <div class="user-detail-val"><?= mostrarDato($p['fecha_cirugia']) ?></div>
+                        </div>
+
+                        <div class="user-detail-item user-detail-full">
+                            <div class="user-detail-label">Alergias Conocidas</div>
+                            <div class="user-detail-val">
+                                <?= mostrarDato($p['alergias']) ?>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-actions">
+
+                        <a href="modificar_paciente.php?cedula=<?= urlencode($p['cedula']) ?>"
+                            class="btn-tbl btn-tbl-edit"
+                            style="text-decoration:none; padding: 10px 22px; font-size: 13.5px; border-radius: 8px;">
+                            Editar Paciente
+                        </a>
+
+                        <a href="tablas_pacientes.php" class="btn-cancel" style="text-decoration:none;">
+                            Regresar
+                        </a>
+
                     </div>
 
                 </div>
 
-                <div class="modal-actions">
+            </section>
 
-                    <a href="modificar_paciente.php?cedula=<?= urlencode($p['cedula']) ?>"
-                        class="btn-tbl btn-tbl-edit"
-                        style="text-decoration:none; padding: 10px 22px; font-size: 13.5px; border-radius: 8px;">
-                        Editar Paciente
-                    </a>
+        </main>
 
-                    <a href="tablas_pacientes.php" class="btn-cancel" style="text-decoration:none;">
-                        Regresar
-                    </a>
+    </div>
 
-                </div>
-
-            </div>
-
-        </section>
-
-    </main>
-
-</div>
-
-<script src="dashboard.js"></script>
+    <script src="dashboard.js"></script>
 
 </body>
+
 </html>

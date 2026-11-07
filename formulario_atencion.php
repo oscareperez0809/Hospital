@@ -53,57 +53,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
     }
 }
 
-// Función para obtener opciones relacionales
-function cargarCatalogo($conectar, $tabla, $campoId, $campoTexto, $defaults = [])
+// Función limpia para obtener opciones relacionales directamente de la BD
+function cargarCatalogo($conectar, $tabla, $campoId, $campoTexto)
 {
     $lista = [];
     if (!empty($conectar)) {
         $q = @mysqli_query($conectar, "SELECT * FROM `$tabla` ORDER BY `$campoTexto` ASC");
         if ($q && mysqli_num_rows($q) > 0) {
             while ($r = mysqli_fetch_assoc($q)) $lista[] = $r;
-        } elseif (!empty($defaults)) {
-            foreach ($defaults as $def) {
-                @mysqli_query($conectar, "INSERT INTO `$tabla` (`$campoTexto`) VALUES ('" . mysqli_real_escape_string($conectar, $def) . "')");
-            }
-            $q = @mysqli_query($conectar, "SELECT * FROM `$tabla` ORDER BY `$campoTexto` ASC");
-            if ($q) {
-                while ($r = mysqli_fetch_assoc($q)) $lista[] = $r;
-            }
         }
     }
     return $lista;
 }
 
-// Cargar catálogos relacionales de MySQL
-$deptos = cargarCatalogo($conectar, 'departamentos', 'id_departamento', 'departamento', [
-    'Urgencias',
-    'Cirugía General',
-    'Medicina Interna',
-    'Pediatría',
-    'Ginecología y Obstetricia',
-    'Oncología',
-    'Traumatología'
-]);
-
-$especialidades = cargarCatalogo($conectar, 'especialidades', 'id_especialidad', 'especialidad', [
-    'Medicina Interna',
-    'Cardiología',
-    'Pediatría',
-    'Obstetricia',
-    'Traumatología',
-    'Oncología Médica',
-    'Cirugía General'
-]);
-
-$etiologias = cargarCatalogo($conectar, 'etiologia', 'id_etiologia', 'etiologia', [
-    'Infecciosa',
-    'Traumática',
-    'Quirúrgica',
-    'Degenerativa',
-    'Vascular',
-    'Congénita',
-    'Oncológica'
-]);
+// Cargar catálogos relacionales de MySQL sin datos predeterminados
+$deptos = cargarCatalogo($conectar, 'departamentos', 'id_departamento', 'departamento');
+$especialidades = cargarCatalogo($conectar, 'especialidades', 'id_especialidad', 'especialidad');
+$etiologias = cargarCatalogo($conectar, 'etiologia', 'id_etiologia', 'etiologia');
 
 // Cargar lista de pacientes registrados
 $pacientesList = [];
@@ -213,7 +179,6 @@ $esEdicion = ($idAtencion > 0);
                         <p class="form-register-subtitle">Complete la información clínica del paciente y asignación hospitalaria.</p>
                     </div>
 
-                    <!-- Cambiado action="" para procesar en el mismo archivo -->
                     <form action="" method="POST" class="patient-form">
 
                         <?php if ($esEdicion): ?>
@@ -245,12 +210,16 @@ $esEdicion = ($idAtencion > 0);
                                 <div class="select-with-icon">
                                     <select id="atnDepto" name="id_departamento" class="form-control" required>
                                         <option value="" disabled <?= ($idDepartamento === 0) ? 'selected' : '' ?>>Seleccione un departamento</option>
-                                        <?php foreach ($deptos as $d): ?>
-                                            <?php $sel = (intval($d['id_departamento']) === $idDepartamento) ? 'selected' : ''; ?>
-                                            <option value="<?= $d['id_departamento'] ?>" <?= $sel ?>>
-                                                <?= htmlspecialchars($d['departamento']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
+                                        <?php if (!empty($deptos)): ?>
+                                            <?php foreach ($deptos as $d): ?>
+                                                <?php $sel = (intval($d['id_departamento']) === $idDepartamento) ? 'selected' : ''; ?>
+                                                <option value="<?= $d['id_departamento'] ?>" <?= $sel ?>>
+                                                    <?= htmlspecialchars($d['departamento']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <option value="" disabled>No hay departamentos en la BD</option>
+                                        <?php endif; ?>
                                     </select>
                                 </div>
                             </div>
@@ -263,12 +232,16 @@ $esEdicion = ($idAtencion > 0);
                                 <div class="select-with-icon">
                                     <select id="atnEspecialidad" name="id_especialidad" class="form-control" required>
                                         <option value="" disabled <?= ($idEspecialidad === 0) ? 'selected' : '' ?>>Seleccione una especialidad</option>
-                                        <?php foreach ($especialidades as $e): ?>
-                                            <?php $sel = (intval($e['id_especialidad']) === $idEspecialidad) ? 'selected' : ''; ?>
-                                            <option value="<?= $e['id_especialidad'] ?>" <?= $sel ?>>
-                                                <?= htmlspecialchars($e['especialidad']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
+                                        <?php if (!empty($especialidades)): ?>
+                                            <?php foreach ($especialidades as $e): ?>
+                                                <?php $sel = (intval($e['id_especialidad']) === $idEspecialidad) ? 'selected' : ''; ?>
+                                                <option value="<?= $e['id_especialidad'] ?>" <?= $sel ?>>
+                                                    <?= htmlspecialchars($e['especialidad']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <option value="" disabled>No hay especialidades en la BD</option>
+                                        <?php endif; ?>
                                     </select>
                                 </div>
                             </div>
@@ -277,12 +250,16 @@ $esEdicion = ($idAtencion > 0);
                                 <div class="select-with-icon">
                                     <select id="atnEtiologia" name="id_etiologia" class="form-control" required>
                                         <option value="" disabled <?= ($idEtiologia === 0) ? 'selected' : '' ?>>Seleccione una etiología</option>
-                                        <?php foreach ($etiologias as $et): ?>
-                                            <?php $sel = (intval($et['id_etiologia']) === $idEtiologia) ? 'selected' : ''; ?>
-                                            <option value="<?= $et['id_etiologia'] ?>" <?= $sel ?>>
-                                                <?= htmlspecialchars($et['etiologia']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
+                                        <?php if (!empty($etiologias)): ?>
+                                            <?php foreach ($etiologias as $et): ?>
+                                                <?php $sel = (intval($et['id_etiologia']) === $idEtiologia) ? 'selected' : ''; ?>
+                                                <option value="<?= $et['id_etiologia'] ?>" <?= $sel ?>>
+                                                    <?= htmlspecialchars($et['etiologia']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <option value="" disabled>No hay etiologías en la BD</option>
+                                        <?php endif; ?>
                                     </select>
                                 </div>
                             </div>
