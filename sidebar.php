@@ -1,10 +1,11 @@
 <?php
-// Parámetro para saber qué pestaña resaltar: 'inicio', 'paciente', 'atencion', 'seguimiento'
+// Parámetro para saber qué pestaña resaltar: 'inicio', 'paciente', 'atencion', 'seguimiento', 'usuarios'
 $paginaActiva = $paginaActiva ?? 'inicio';
+$rolUsuario = $_SESSION['rol'] ?? 'empleado';
 ?>
 <!-- Barra Lateral Reutilizable -->
 <aside class="sidebar">
-    
+
     <!-- Tarjeta Blanca del Logotipo ISSSTE -->
     <div class="sidebar-logo-card">
         <img src="logo-issste.png" alt="Logotipo ISSSTE" class="sidebar-logo-img">
@@ -24,9 +25,13 @@ $paginaActiva = $paginaActiva ?? 'inicio';
         <a href="tablas_seguimiento.php" class="nav-link <?= ($paginaActiva === 'seguimiento') ? 'active' : '' ?>">
             SEGUIMIENTO
         </a>
-        <!-- <a href="tablas_usuarios.php" class="nav-link <?= ($paginaActiva === 'usuarios') ? 'active' : '' ?>">
-            USUARIOS
-        </a> -->
+
+        <!-- Módulo de Usuarios visible SOLO para Admin y Director General -->
+        <?php if ($rolUsuario === 'admin' || $rolUsuario === 'director'): ?>
+            <a href="tablas_usuarios.php" class="nav-link <?= ($paginaActiva === 'usuarios') ? 'active' : '' ?>">
+                USUARIOS
+            </a>
+        <?php endif; ?>
     </nav>
 
     <!-- Cerrar sesión -->

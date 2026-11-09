@@ -1,51 +1,75 @@
 <?php
 session_start();
 require_once "conexion.php";
-$paginaActiva = 'usuarios';
-$tituloHeader = 'Registro de Usuarios';
 
-// Valores por si se viene de editar
-$cedula = $_GET['cedula'] ?? '';
-$nombre = $_GET['nombre'] ?? '';
-$paterno = $_GET['paterno'] ?? '';
-$materno = $_GET['materno'] ?? '';
-$depto = $_GET['depto'] ?? '';
-$area = $_GET['area'] ?? '';
-$rol = $_GET['rol'] ?? 'empleado';
-$estado = $_GET['estado'] ?? 'activo';
-
-if (!empty($cedula) && !empty($conectar)) {
-    $stmt = mysqli_prepare($conectar, "SELECT * FROM usuarios WHERE cedula = ? OR cedula_empleado = ? LIMIT 1");
-    if ($stmt) {
-        mysqli_stmt_bind_param($stmt, "ss", $cedula, $cedula);
-        mysqli_stmt_execute($stmt);
-        $res = mysqli_stmt_get_result($stmt);
-        if ($res && $u = mysqli_fetch_assoc($res)) {
-            $nombre = $u['nombre'] ?? $nombre;
-            $paterno = $u['paterno'] ?? $paterno;
-            $materno = $u['materno'] ?? $materno;
-            $depto = $u['departamento'] ?? ($u['depto'] ?? $depto);
-            $area = $u['area'] ?? $area;
-            $rol = $u['rol'] ?? $rol;
-            $estado = $u['estado'] ?? $estado;
-        }
-    }
+// Seguridad: Solo el Director General puede registrar usuarios
+$rolUsuario = $_SESSION['rol'] ?? 'empleado';
+if ($rolUsuario !== 'director') {
+    header("Location: tablas_usuarios.php");
+    exit();
 }
 
-$esEdicion = !empty($cedula);
+$paginaActiva = 'usuarios';
+$tituloHeader = 'Registro de Nuevo Usuario';
+
+$mensajeErrorForm = '';
+
+// Procesar el registro directamente en este mismo formulario (como tus otros módulos)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($conectar)) {
+    $cedula   = trim($_POST['cedula'] ?? '');
+    $nombre   = trim($_POST['nombre'] ?? '');
+    $paterno  = trim($_POST['paterno'] ?? '');
+    $materno  = trim($_POST['materno'] ?? '');
+    $depto    = trim($_POST['departamento'] ?? '');
+    $area     = trim($_POST['area'] ?? '');
+    $rol      = trim($_POST['rol'] ?? 'empleado');
+    $password = trim($_POST['contrasenia'] ?? '');
+
+    if (!empty($cedula) && !empty($nombre) && !empty($paterno)) {
+        // Verificar si la cédula ya existe
+        $check = mysqli_prepare($conectar, "SELECT cedula FROM usuarios WHERE cedula = ?");
+        if ($check) {
+            mysqli_stmt_bind_param($check, "s", $cedula);
+            mysqli_stmt_execute($check);
+            $resCheck = mysqli_stmt_get_result($check);
+
+            if ($resCheck && mysqli_num_rows($resCheck) > 0) {
+                $mensajeErrorForm = 'La cédula o número de empleado ya se encuentra registrada en el sistema.';
+            } else {
+                // Encriptar contraseña (o usar 12345678 por defecto si se omite)
+                $hash = !empty($password) ? password_hash($password, PASSWORD_DEFAULT) : password_hash('12345678', PASSWORD_DEFAULT);
+
+                $stmt = mysqli_prepare(
+                    $conectar,
+                    "INSERT INTO usuarios (cedula, nombre, ape_pat, ape_mat, departamento, area, rol, contrasenia) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                );
+
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, "ssssssss", $cedula, $nombre, $paterno, $materno, $depto, $area, $rol, $hash);
+                    if (mysqli_stmt_execute($stmt)) {
+                        header("Location: tablas_usuarios.php?registrado=1");
+                        exit();
+                    }
+                }
+                $mensajeErrorForm = 'Error al guardar el usuario en la base de datos.';
+            }
+        }
+    } else {
+        $mensajeErrorForm = 'Por favor, complete los campos obligatorios.';
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $esEdicion ? 'Editar Usuario' : 'Registro de Usuario' ?> - ISSSTE</title>
-    <!-- Fuentes Google -->
+    <title>Registrar Usuario - Sistema ISSSTE</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="dashboard.css">
-    <!-- Script Anti-Parpadeo Inmediato de Modo Oscuro -->
     <script>
         (function() {
             var theme = localStorage.getItem('theme');
@@ -55,200 +79,95 @@ $esEdicion = !empty($cedula);
         })();
     </script>
 </head>
+
 <body>
 
     <div class="dashboard-container">
-        
-        <!-- Barra Lateral con USUARIOS activo -->
         <?php include 'sidebar.php'; ?>
-
-        <!-- Área Principal -->
         <main class="main-wrapper">
-            
-            <!-- Cabecera Superior -->
             <?php include 'header.php'; ?>
 
-            <!-- Formulario de Usuario (Fiel al diseño institucional) -->
             <section class="content-body">
-                
-                <!-- Botón VOLVER rectangular gris -->
+
                 <div class="form-toolbar">
                     <a href="tablas_usuarios.php" class="btn-volver" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
                         VOLVER
                     </a>
                 </div>
 
-                <!-- Tarjeta Blanca de Registro de Usuario -->
+                <?php if (!empty($mensajeErrorForm)): ?>
+                    <div style="background-color: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #991b1b; padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                        <span>⚠</span> <?= htmlspecialchars($mensajeErrorForm) ?>
+                    </div>
+                <?php endif; ?>
+
                 <div class="form-register-card">
                     <div class="form-register-header">
-                        <h2 class="form-register-title"><?= $esEdicion ? 'Editar Usuario' : 'Registro de Usuario' ?></h2>
-                        <p class="form-register-subtitle">Complete los datos personales, laborales y permisos de acceso del usuario.</p>
+                        <h2 class="form-register-title">Registro de Nuevo Usuario</h2>
+                        <p class="form-register-subtitle">Complete la información del personal para dar de alta su cuenta en el sistema.</p>
                     </div>
 
-                    <form action="tablas_usuarios.php" method="POST" class="patient-form" id="formUsuario">
-                        
-                        <!-- Fila 1: Cédula Profesional / No. Empleado y Nombre(s) -->
-                        <div class="form-row-2">
-                            <div class="form-field">
-                                <label for="userCedula" class="form-label">Cédula Profesional / Número de Empleado</label>
-                                <input 
-                                    type="text" 
-                                    id="userCedula" 
-                                    name="cedula_empleado" 
-                                    class="form-control" 
-                                    placeholder="Ej. EMP-10492 o Céd. 1234567" 
-                                    value="<?= htmlspecialchars($cedula) ?>"
-                                    required
-                                >
-                            </div>
-                            <div class="form-field">
-                                <label for="userNombre" class="form-label">Nombre(s)</label>
-                                <input 
-                                    type="text" 
-                                    id="userNombre" 
-                                    name="nombre" 
-                                    class="form-control" 
-                                    placeholder="Ingrese los nombres" 
-                                    value="<?= htmlspecialchars($nombre) ?>"
-                                    required
-                                >
-                            </div>
-                        </div>
+                    <!-- El action apunta a sí mismo (formulario_usuario.php) -->
+                    <form action="formulario_usuario.php" method="POST" class="patient-form">
 
-                        <!-- Fila 2: Apellido Paterno y Apellido Materno -->
                         <div class="form-row-2">
                             <div class="form-field">
-                                <label for="userPaterno" class="form-label">Apellido Paterno</label>
-                                <input 
-                                    type="text" 
-                                    id="userPaterno" 
-                                    name="paterno" 
-                                    class="form-control" 
-                                    placeholder="Ingrese el apellido paterno" 
-                                    value="<?= htmlspecialchars($paterno) ?>"
-                                    required
-                                >
+                                <label for="regCedula" class="form-label">Cédula / No. Empleado</label>
+                                <input type="text" id="regCedula" name="cedula" class="form-control" placeholder="Ej. EMP-10293" required>
                             </div>
                             <div class="form-field">
-                                <label for="userMaterno" class="form-label">Apellido Materno</label>
-                                <input 
-                                    type="text" 
-                                    id="userMaterno" 
-                                    name="materno" 
-                                    class="form-control" 
-                                    placeholder="Ingrese el apellido materno" 
-                                    value="<?= htmlspecialchars($materno) ?>"
-                                    required
-                                >
-                            </div>
-                        </div>
-
-                        <!-- Fila 3: Departamento y Área donde va a pertenecer -->
-                        <div class="form-row-2">
-                            <div class="form-field">
-                                <label for="userDepto" class="form-label">Departamento</label>
-                                <input 
-                                    type="text" 
-                                    id="userDepto" 
-                                    name="departamento" 
-                                    class="form-control" 
-                                    placeholder="Ej. Urgencias, Medicina Interna, Cirugía" 
-                                    value="<?= htmlspecialchars($depto) ?>"
-                                    required
-                                >
-                            </div>
-                            <div class="form-field">
-                                <label for="userArea" class="form-label">Área</label>
-                                <input 
-                                    type="text" 
-                                    id="userArea" 
-                                    name="area" 
-                                    class="form-control" 
-                                    placeholder="Ej. Triage, Quirófano 1, Hospitalización" 
-                                    value="<?= htmlspecialchars($area) ?>"
-                                    required
-                                >
-                            </div>
-                        </div>
-
-                        <!-- Fila 4: Contraseña y Estado -->
-                        <div class="form-row-2">
-                            <div class="form-field">
-                                <label for="userPassword" class="form-label">Contraseña</label>
-                                <div class="input-password-wrapper">
-                                    <input 
-                                        type="password" 
-                                        id="userPassword" 
-                                        name="password" 
-                                        class="form-control" 
-                                        placeholder="<?= $esEdicion ? 'Dejar en blanco para conservar actual' : 'Ingrese una contraseña segura' ?>" 
-                                        <?= $esEdicion ? '' : 'required' ?>
-                                    >
-                                    <button type="button" id="toggleUserPassword" class="btn-eye-toggle" aria-label="Mostrar u ocultar contraseña">
-                                        <svg id="eyeIconUser" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                            <circle cx="12" cy="12" r="3"></circle>
-                                        </svg>
-                                    </button>
+                                <label for="regRol" class="form-label">Rol en el Sistema</label>
+                                <div class="select-with-icon">
+                                    <select id="regRol" name="rol" class="form-control" required>
+                                        <option value="empleado" selected>Empleado (Operativo)</option>
+                                        <option value="admin">Administrador (Solo lectura)</option>
+                                        <option value="director">Director General (Control Total)</option>
+                                    </select>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="form-row-2">
                             <div class="form-field">
-                                <label for="userEstado" class="form-label">Estado de la Cuenta</label>
-                                <select id="userEstado" name="estado" class="form-control" required>
-                                    <option value="activo" <?= ($estado === 'activo') ? 'selected' : '' ?>>Activo (Permite inicio de sesión)</option>
-                                    <option value="inactivo" <?= ($estado === 'inactivo') ? 'selected' : '' ?>>Inactivo (Acceso suspendido)</option>
-                                </select>
+                                <label for="regNombre" class="form-label">Nombre(s)</label>
+                                <input type="text" id="regNombre" name="nombre" class="form-control" placeholder="Ingrese los nombres" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="regPaterno" class="form-label">Apellido Paterno</label>
+                                <input type="text" id="regPaterno" name="paterno" class="form-control" placeholder="Ingrese el apellido paterno" required>
                             </div>
                         </div>
 
-                        <!-- Fila 5: Rol del Sistema (Exclusivo: solo una opción) -->
-                        <div class="form-field-full" style="margin-top: 10px;">
-                            <label class="form-label">Rol del Usuario (Selecciona únicamente una opción):</label>
-                            
-                            <div class="role-radio-group">
-                                <!-- Opción 1: Empleado -->
-                                <label class="role-radio-card">
-                                    <input type="radio" name="rol" value="empleado" <?= ($rol === 'empleado') ? 'checked' : '' ?> required>
-                                    <div class="role-card-content">
-                                        <div class="role-card-header">
-                                            <span class="role-card-title">🩺 Empleado</span>
-                                            <span class="role-radio-dot"></span>
-                                        </div>
-                                        <p class="role-card-desc">Operativo. CRUD básico del hospital (Pacientes, Atención y Seguimiento).</p>
-                                    </div>
-                                </label>
-
-                                <!-- Opción 2: Administrador -->
-                                <label class="role-radio-card">
-                                    <input type="radio" name="rol" value="admin" <?= ($rol === 'admin') ? 'checked' : '' ?>>
-                                    <div class="role-card-content">
-                                        <div class="role-card-header">
-                                            <span class="role-card-title">🛡️ Administrador</span>
-                                            <span class="role-radio-dot"></span>
-                                        </div>
-                                        <p class="role-card-desc">CRUD hospitalario y visualización del listado de empleados registrados.</p>
-                                    </div>
-                                </label>
-
-                                <!-- Opción 3: Director General -->
-                                <label class="role-radio-card">
-                                    <input type="radio" name="rol" value="director" <?= ($rol === 'director') ? 'checked' : '' ?>>
-                                    <div class="role-card-content">
-                                        <div class="role-card-header">
-                                            <span class="role-card-title">👑 Director General</span>
-                                            <span class="role-radio-dot"></span>
-                                        </div>
-                                        <p class="role-card-desc">Acceso total. Puede registrar, editar, dar de baja y eliminar usuarios.</p>
-                                    </div>
-                                </label>
+                        <div class="form-row-2">
+                            <div class="form-field">
+                                <label for="regMaterno" class="form-label">Apellido Materno</label>
+                                <input type="text" id="regMaterno" name="materno" class="form-control" placeholder="Ingrese el apellido materno">
+                            </div>
+                            <div class="form-field">
+                                <label for="regDepto" class="form-label">Departamento</label>
+                                <input type="text" id="regDepto" name="departamento" class="form-control" placeholder="Ej. Urgencias, Consulta Externa">
                             </div>
                         </div>
 
-                        <!-- Fila Inferior: Botón Guardar -->
-                        <div style="display: flex; justify-content: flex-end; margin-top: 26px;">
-                            <button type="submit" class="btn-guardar">
-                                <?= $esEdicion ? 'Actualizar Usuario' : 'Guardar Usuario' ?>
-                            </button>
+                        <div class="form-row-2">
+                            <div class="form-field">
+                                <label for="regArea" class="form-label">Área Específica</label>
+                                <input type="text" id="regArea" name="area" class="form-control" placeholder="Ej. Área A, Quirófano 2">
+                            </div>
+                            <div class="form-field">
+                                <label for="regContrasenia" class="form-label">Contraseña</label>
+                                <input type="password" id="regContrasenia" name="contrasenia" class="form-control" placeholder="••••••••">
+                                <small style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; display: block;">Por defecto: <code>12345678</code> si se omite.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-row-bottom" style="margin-top: 20px;">
+                            <div class="form-field" style="visibility: hidden;"></div>
+                            <div class="form-actions-right">
+                                <button type="submit" class="btn-guardar">
+                                    Guardar Usuario
+                                </button>
+                            </div>
                         </div>
 
                     </form>
@@ -256,35 +175,9 @@ $esEdicion = !empty($cedula);
 
             </section>
         </main>
-
     </div>
 
-    <!-- Scripts -->
     <script src="dashboard.js"></script>
-    <script>
-        // Ojo para mostrar/ocultar contraseña
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggleBtn = document.getElementById('toggleUserPassword');
-            const passInput = document.getElementById('userPassword');
-            const eyeIcon = document.getElementById('eyeIconUser');
-
-            const eyeOpen = `
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-            `;
-            const eyeClosed = `
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-            `;
-
-            if (toggleBtn && passInput) {
-                toggleBtn.addEventListener('click', () => {
-                    const isPass = passInput.getAttribute('type') === 'password';
-                    passInput.setAttribute('type', isPass ? 'text' : 'password');
-                    eyeIcon.innerHTML = isPass ? eyeClosed : eyeOpen;
-                });
-            }
-        });
-    </script>
 </body>
+
 </html>
