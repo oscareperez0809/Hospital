@@ -148,18 +148,18 @@ if (isset($_GET['registrado'])) {
 
                                                 <!-- Opciones de Edición y Eliminación exclusivas para el DIRECTOR GENERAL -->
                                                 <?php if ($rolUsuario === 'director'): ?>
-                                                    <a href="formulario_usuario.php?cedula=<?= urlencode($u['cedula']) ?>" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
+                                                    <a href="modificar_usuario.php?cedula=<?= urlencode($u['cedula']) ?>" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                                     <a href="eliminar_usuario.php?cedula=<?= urlencode($u['cedula']) ?>" class="btn-tbl btn-tbl-delete" style="text-decoration:none;" onclick="return confirm('¿Seguro que deseas eliminar este usuario del sistema?');">Eliminar</a>
                                                 <?php endif; ?>
                                             </td>
                                         </tr>
-                            <?php
+                                <?php
                                     }
                                 }
                             }
 
                             if (!$hayUsuariosBD):
-                            ?>
+                                ?>
                                 <tr>
                                     <td colspan="6" style="text-align:center; padding: 48px 20px; color: var(--text-secondary);">
                                         <div style="font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">

@@ -5,9 +5,20 @@ $usuarioActual = $_SESSION['usuario'] ?? 'Personal Médico';
 ?>
 <!-- Cabecera Superior Reutilizable -->
 <header class="top-header">
-    <div class="header-title-container">
-        <h2><?= htmlspecialchars($tituloHeader) ?></h2>
-        <p><?= htmlspecialchars($subtituloHeader) ?></p>
+    <div class="header-title-container" style="display: flex; align-items: center; gap: 12px;">
+        <!-- Botón de Menú Hamburguesa (Visible solo en responsive gracias al CSS) -->
+        <button type="button" class="hamburger-toggle" id="sidebarToggle" aria-label="Abrir menú">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
+        <div>
+            <h2><?= htmlspecialchars($tituloHeader) ?></h2>
+            <p><?= htmlspecialchars($subtituloHeader) ?></p>
+        </div>
     </div>
 
     <div class="header-actions">

@@ -1,0 +1,99 @@
+/* =================================================================
+   RESPONSIVO PARA TABLETS / IPADS Y TELÉFONOS (Max-width: 992px)
+   ================================================================= */
+@media screen and (max-width: 992px) {
+
+    /* 1. Mostrar el botón de menú hamburguesa en la cabecera */
+    .hamburger-toggle {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        color: var(--text-primary);
+    }
+
+    /* 2. Convertir el sidebar en un menú lateral flotante (Off-canvas) */
+    .dashboard-container {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100vh;
+        z-index: 1000;
+        transition: transform 0.3s ease-in-out;
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar.sidebar-open {
+        transform: translateX(280px);
+    }
+
+    .main-wrapper {
+        width: 100%;
+        padding: 10px;
+    }
+
+    /* 3. TRANSFORMACIÓN DE LA TABLA A TARJETAS CON ETIQUETAS */
+    .patients-table thead {
+        display: none; /* Oculta los títulos de columnas tradicionales */
+    }
+
+    .patients-table, 
+    .patients-table tbody, 
+    .patients-table tr, 
+    .patients-table td {
+        display: block;
+        width: 100%;
+    }
+
+    /* Cada fila se convierte en una tarjeta independiente */
+    .patients-table tr {
+        background-color: var(--bg-card, #1e293b);
+        border: 1px solid var(--border-color, #334155);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        padding: 14px 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Las celdas se alinean en filas flexibles */
+    .patients-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: transparent !important;
+        border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+        padding: 10px 0;
+        text-align: right;
+        font-size: 13.5px;
+        color: var(--text-primary);
+    }
+
+    /* La última celda (acciones) se alinea a la derecha */
+    .patients-table td:last-child {
+        border-bottom: none;
+        padding-top: 12px;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    /* Inyección automática de las etiquetas data-label a la izquierda */
+    .patients-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        text-align: left;
+        color: var(--text-secondary, #94a3b8);
+        font-size: 12px;
+        text-transform: uppercase;
+        flex-shrink: 0;
+        margin-right: 15px;
+    }
+}

@@ -9,15 +9,15 @@ $mensajeError = '';
 
 // 1. Procesar Inserción o Actualización por POST (cuando viene del formulario)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($conectar)) {
-    $cedula_original   = trim($_POST['cedula_original'] ?? '');
-    $cedula            = trim($_POST['cedula'] ?? '');
-    $nombre            = trim($_POST['nombre'] ?? '');
-    $paterno           = trim($_POST['apellido_paterno'] ?? '');
-    $materno           = trim($_POST['apellido_materno'] ?? '');
-    $nacimiento        = !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : null;
-    $genero            = trim($_POST['genero'] ?? '');
-    $alergias          = trim($_POST['alergias'] ?? '');
-    $cirugia           = !empty($_POST['fecha_cirugia']) ? $_POST['fecha_cirugia'] : null;
+    $cedula_original     = trim($_POST['cedula_original'] ?? '');
+    $cedula              = trim($_POST['cedula'] ?? '');
+    $nombre              = trim($_POST['nombre'] ?? '');
+    $paterno             = trim($_POST['apellido_paterno'] ?? '');
+    $materno             = trim($_POST['apellido_materno'] ?? '');
+    $nacimiento          = !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : null;
+    $genero              = trim($_POST['genero'] ?? '');
+    $alergias            = trim($_POST['alergias'] ?? '');
+    $cirugia             = !empty($_POST['fecha_cirugia']) ? $_POST['fecha_cirugia'] : null;
 
     if (!empty($cedula) && !empty($nombre) && !empty($paterno)) {
         if (!empty($cedula_original)) {
@@ -73,6 +73,7 @@ if (isset($_GET['registrado'])) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="responsive.css">
     <script>
         (function() {
             var theme = localStorage.getItem('theme');
@@ -144,12 +145,12 @@ if (isset($_GET['registrado'])) {
                                         $gen = htmlspecialchars($p['genero']);
                             ?>
                                         <tr>
-                                            <td class="cell-cedula"><?= $ced ?></td>
-                                            <td><strong><?= $nom ?></strong></td>
-                                            <td><?= $pat ?></td>
-                                            <td><?= $mat ?></td>
-                                            <td><?= $gen ?></td>
-                                            <td class="cell-actions">
+                                            <td class="cell-cedula" data-label="Cédula"><?= $ced ?></td>
+                                            <td data-label="Nombre"><strong><?= $nom ?></strong></td>
+                                            <td data-label="Apellido Paterno"><?= $pat ?></td>
+                                            <td data-label="Apellido Materno"><?= $mat ?></td>
+                                            <td data-label="Género"><?= $gen ?></td>
+                                            <td class="cell-actions" data-label="Acciones">
                                                 <a href="ver_paciente.php?cedula=<?= urlencode($p['cedula']) ?>" class="btn-tbl btn-tbl-view" style="text-decoration:none;">Ver</a>
                                                 <a href="formulario_paciente.php?cedula=<?= urlencode($p['cedula']) ?>" class="btn-tbl btn-tbl-edit" style="text-decoration:none;">Editar</a>
                                                 <form action="eliminar_paciente.php" method="POST" style="display:inline;">
@@ -158,13 +159,13 @@ if (isset($_GET['registrado'])) {
                                                 </form>
                                             </td>
                                         </tr>
-                                <?php
+                            <?php
                                     }
                                 }
                             }
 
                             if (!$hayPacientesBD):
-                                ?>
+                            ?>
                                 <tr>
                                     <td colspan="6" style="text-align:center; padding: 48px 20px; color: var(--text-secondary);">
                                         <div style="font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">

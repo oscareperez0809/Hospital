@@ -9,9 +9,7 @@ if ($rolUsuario !== 'director' || $_SERVER['REQUEST_METHOD'] !== 'POST') {
   exit();
 }
 
-$cedula = trim($_POST['cedula'] ?? '');
 $cedulaOriginal = trim($_POST['cedula_original'] ?? '');
-
 $nombre = trim($_POST['nombre'] ?? '');
 $paterno = trim($_POST['paterno'] ?? '');
 $materno = trim($_POST['materno'] ?? '');
@@ -31,7 +29,6 @@ if (!empty($password)) {
   $stmt = mysqli_prepare(
     $conectar,
     "UPDATE usuarios SET 
-            cedula = ?, 
             nombre = ?, 
             ape_pat = ?, 
             ape_mat = ?, 
@@ -49,8 +46,7 @@ if (!empty($password)) {
 
   mysqli_stmt_bind_param(
     $stmt,
-    "sssssssss",
-    $cedula,
+    "ssssssss",
     $nombre,
     $paterno,
     $materno,
@@ -64,7 +60,6 @@ if (!empty($password)) {
   $stmt = mysqli_prepare(
     $conectar,
     "UPDATE usuarios SET 
-            cedula = ?, 
             nombre = ?, 
             ape_pat = ?, 
             ape_mat = ?, 
@@ -81,8 +76,7 @@ if (!empty($password)) {
 
   mysqli_stmt_bind_param(
     $stmt,
-    "ssssssss",
-    $cedula,
+    "sssssss",
     $nombre,
     $paterno,
     $materno,

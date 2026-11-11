@@ -1,6 +1,15 @@
 <?php
 session_start();
 require_once "conexion.php";
+
+// Seguridad: Si no ha iniciado sesión, redirigir al login
+if (!isset($_SESSION["usuario"])) {
+    header("Location: index.php");
+    exit;
+}
+
+$nombreUsuario = $_SESSION["usuario"];
+$rolUsuario = $_SESSION['rol'] ?? 'empleado';
 $paginaActiva = 'inicio';
 $tituloHeader = 'Panel General de Monitoreo';
 
@@ -57,6 +66,14 @@ if (!empty($conectar)) {
 
             <!-- Contenido Exclusivo del Dashboard (INICIO) -->
             <section class="content-body">
+                
+                <!-- Saludo personalizado con el rol -->
+                <div class="welcome-banner" style="margin-bottom: 25px;">
+                    <h2>Bienvenido, <?= htmlspecialchars($nombreUsuario) ?></h2>
+                    <p style="opacity: 0.8; font-size: 14px;">Perfil del sistema: <strong><?= ucfirst(htmlspecialchars($rolUsuario)) ?></strong></p>
+                </div>
+
+                <!-- Tarjetas KPI Principales -->
                 <div class="kpi-grid">
                     <!-- Tarjeta 1: Pacientes Ingresados -->
                     <div class="kpi-card">
@@ -82,18 +99,40 @@ if (!empty($conectar)) {
                         </div>
                     </div>
 
-                    <!-- Tarjeta 4: ¿Visitas? -->
+                    <!-- Tarjeta 4: Visitas -->
                     <div class="kpi-card">
-                        <h3 class="kpi-title">¿VISITAS?</h3>
+                        <h3 class="kpi-title">VISITAS</h3>
                         <div class="kpi-number">
                             <span class="hash">#</span> <?= $countVisitas ?>
                         </div>
                     </div>
+                </div>
+
+                <!-- SECCIÓN DINÁMICA SEGÚN EL ROL -->
+                <div class="role-specific-section" style="margin-top: 35px;">
+                    
+                    <!-- Accesos exclusivos para Administradores y Directores -->
+                    <?php if ($rolUsuario === 'admin' || $rolUsuario === 'director'): ?>
+                        <div class="admin-control-panel" style="background: var(--card-bg, #fff); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 10px; font-size: 18px;">Panel de Administración de Personal</h3>
+                            <p style="margin-bottom: 15px; font-size: 14px; opacity: 0.8;">Tienes privilegios para gestionar las cuentas de usuario y credenciales del hospital.</p>
+                            <a href="tablas_usuarios.php" class="btn-action" style="display: inline-block; padding: 10px 20px; background: #0284c7; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600;">Gestionar Usuarios</a>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Panel exclusivo para el Director General -->
+                    <?php if ($rolUsuario === 'director'): ?>
+                        <div class="director-control-panel" style="background: var(--card-bg, #fff); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                            <h3 style="margin-bottom: 10px; font-size: 18px;">Supervisión Directiva</h3>
+                            <p style="margin-bottom: 15px; font-size: 14px; opacity: 0.8;">Acceso a reportes globales y métricas consolidadas del Hospital Regional del ISSSTE.</p>
+                            <a href="#" class="btn-action" style="display: inline-block; padding: 10px 20px; background: #059669; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600;">Ver Reportes Globales</a>
+                        </div>
+                    <?php endif; ?>
 
                 </div>
+
             </section>
         </main>
-
     </div>
 
     <!-- Scripts -->

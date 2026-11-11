@@ -59,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($conectar)) {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,13 +77,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($conectar)) {
         })();
     </script>
 </head>
+
 <body>
     <div class="dashboard-container">
         <?php include 'sidebar.php'; ?>
         <main class="main-wrapper">
             <?php include 'header.php'; ?>
             <section class="content-body">
-                
+
                 <div class="form-toolbar">
                     <a href="tablas_usuarios.php" class="btn-volver" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
                         VOLVER
@@ -95,8 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($conectar)) {
                         <p class="form-register-subtitle">Actualice la información del personal en el sistema.</p>
                     </div>
 
-                    <form action="editar_usuario.php?cedula=<?= urlencode($cedulaGet) ?>" method="POST" class="patient-form">
-                        
+                    <form action="modificar_usuario.php?cedula=<?= urlencode($cedulaGet) ?>" method="POST" class="patient-form">
+
                         <div class="form-row-2">
                             <div class="form-field">
                                 <label class="form-label">Cédula / No. Empleado (Fijo)</label>
@@ -163,4 +165,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($conectar)) {
     </div>
     <script src="dashboard.js"></script>
 </body>
+
 </html>

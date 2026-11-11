@@ -1332,49 +1332,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .cama-icon-wrapper svg {
     color: var(--text-primary);
 }
-
-/* ========================================================
-   RESPONSIVE DESIGN (TABLETS Y MÓVILES)
-   ======================================================== */
-@media (max-width: 900px) {
-    .kpi-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-}
-
-@media (max-width: 768px) {
-    .dashboard-container {
-        flex-direction: column;
-    }
-
-    .sidebar {
-        width: 100%;
-        padding: 16px;
-    }
-
-    .sidebar-logo-card {
-        margin-bottom: 16px;
-        width: 76px;
-        height: 76px;
-    }
-
-    .sidebar-nav {
-        flex-direction: row;
-        overflow-x: auto;
-        padding-bottom: 8px;
-    }
-
-    .nav-link {
-        white-space: nowrap;
-        padding: 10px 16px;
-    }
-
-    .top-header {
-        padding: 0 16px;
-    }
-
-    .content-body {
-        padding: 20px 16px;
-    }
+/* El botón de hamburguesa no existe visualmente en pantallas grandes */
+.hamburger-toggle {
+    display: none; 
 }

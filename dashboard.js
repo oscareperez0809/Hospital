@@ -106,3 +106,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
+document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('sidebar-open');
+        });
+
+        // Cerrar el menú si se hace clic fuera de él en dispositivos móviles
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 992) {
+                if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                    sidebar.classList.remove('sidebar-open');
+                }
+            }
+        });
+    }
+});
